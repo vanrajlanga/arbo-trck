@@ -309,6 +309,34 @@ export const apiVendor = {
         apiCall(`/api/vendor/locations/pickup-points/${id}`, {
             method: "DELETE",
         }),
+
+    // Destination endpoints
+    getDestinations: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/destinations${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getDestinationById: (id) => apiCall(`/api/vendor/destinations/${id}`),
+    createDestination: (destinationData) =>
+        apiCall("/api/vendor/destinations", {
+            method: "POST",
+            body: JSON.stringify(destinationData),
+        }),
+    updateDestination: (id, destinationData) =>
+        apiCall(`/api/vendor/destinations/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(destinationData),
+        }),
+    deleteDestination: (id) =>
+        apiCall(`/api/vendor/destinations/${id}`, {
+            method: "DELETE",
+        }),
+    toggleDestinationPopularity: (id) =>
+        apiCall(`/api/vendor/destinations/${id}/toggle-popularity`, {
+            method: "PATCH",
+        }),
+    getPopularDestinations: () => apiCall("/api/vendor/destinations/popular"),
 };
 
 // Legacy API methods (for backward compatibility)

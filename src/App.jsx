@@ -34,6 +34,7 @@ import Analytics from "./pages/admin/Analytics";
 import AdminWithdrawals from "@/pages/admin/Withdrawals";
 import AdminCoupons from "@/pages/admin/Coupons";
 import VendorCoupons from "@/pages/vendor/Coupons";
+import Destinations from "@/pages/vendor/Destinations";
 
 // Import new admin pages
 import AdminUsers from "./pages/admin/Users";
@@ -596,6 +597,13 @@ function App() {
                                             path: "locations",
                                             element: /*#__PURE__*/ _jsx(
                                                 ManageLocations,
+                                                {}
+                                            ),
+                                        }),
+                                        /*#__PURE__*/ _jsx(Route, {
+                                            path: "destinations",
+                                            element: /*#__PURE__*/ _jsx(
+                                                Destinations,
                                                 {}
                                             ),
                                         }),

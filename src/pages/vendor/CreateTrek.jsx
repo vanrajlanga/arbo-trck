@@ -24,11 +24,12 @@ const CreateTrek = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [cities, setCities] = useState([]);
+    const [destinations, setDestinations] = useState([]);
     const [currentStep, setCurrentStep] = useState("basic-info");
 
     const [trek, setTrek] = useState({
         name: "",
-        destination: "",
+        destination_id: "",
         description: "",
         trekType: "",
         category: "",
@@ -41,6 +42,7 @@ const CreateTrek = () => {
         startDate: "",
         endDate: "",
         cancellationPolicy: "",
+        city_id: "",
     });
 
     const [trekStages, setTrekStages] = useState([]);
@@ -59,27 +61,21 @@ const CreateTrek = () => {
     const [accommodations, setAccommodations] = useState([]);
     const [images, setImages] = useState([]);
 
-    // Load cities from localStorage on component mount
+    // Fetch destinations and cities from API on mount
     useEffect(() => {
-        const savedCities = localStorage.getItem("vendorCities");
-        if (savedCities) {
-            setCities(JSON.parse(savedCities));
-        } else {
-            // Default cities if none exist
-            const defaultCities = [
-                { id: "1", name: "Hyderabad", state: "Telangana" },
-                { id: "2", name: "Warangal", state: "Telangana" },
-                { id: "3", name: "Khammam", state: "Telangana" },
-                { id: "4", name: "Vijayawada", state: "Andhra Pradesh" },
-                { id: "5", name: "Visakhapatnam", state: "Andhra Pradesh" },
-                { id: "6", name: "Guntur", state: "Andhra Pradesh" },
-                { id: "7", name: "Chennai", state: "Tamil Nadu" },
-                { id: "8", name: "Bangalore", state: "Karnataka" },
-            ];
-            setCities(defaultCities);
-            localStorage.setItem("vendorCities", JSON.stringify(defaultCities));
+        async function fetchData() {
+            try {
+                const [destRes, cityRes] = await Promise.all([
+                    apiVendor.getDestinations({ status: "active" }),
+                    apiVendor.getCities({ status: "active" }),
+                ]);
+                setDestinations(destRes.data || []);
+                setCities(cityRes.data?.cities || []);
+            } catch (err) {
+                toast.error("Failed to load destinations or cities");
+            }
         }
-
+        fetchData();
         // Initialize with default cancellation policy
         setPolicies([
             {
@@ -275,7 +271,7 @@ const CreateTrek = () => {
         e.preventDefault();
 
         // Basic validation
-        if (!trek.name || !trek.destination || !trek.price) {
+        if (!trek.name || !trek.destination_id || !trek.price) {
             toast.error("Please fill in all required fields");
             return;
         }
@@ -290,7 +286,7 @@ const CreateTrek = () => {
 
             const trekData = {
                 name: trek.name,
-                destination: trek.destination,
+                destination_id: trek.destination_id,
                 description: trek.description,
                 duration: trek.duration,
                 durationDays: parseInt(trek.durationDays) || null,
@@ -343,7 +339,7 @@ const CreateTrek = () => {
     const canProceed = (step) => {
         switch (step) {
             case "basic-info":
-                return trek.name && trek.destination && trek.description;
+                return trek.name && trek.destination_id && trek.description;
             case "trek-type":
                 return trek.trekType && trek.category;
             case "duration":
@@ -563,14 +559,29 @@ const CreateTrek = () => {
                                         <Label htmlFor="destination">
                                             Destination *
                                         </Label>
-                                        <Input
-                                            id="destination"
-                                            name="destination"
-                                            value={trek.destination}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter destination"
-                                            required
-                                        />
+                                        <Select
+                                            value={trek.destination_id}
+                                            onValueChange={(value) =>
+                                                handleSelectChange(
+                                                    "destination_id",
+                                                    value
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select destination" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {destinations.map((dest) => (
+                                                    <SelectItem
+                                                        key={dest.id}
+                                                        value={String(dest.id)}
+                                                    >
+                                                        {dest.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div>
                                         <Label htmlFor="description">
@@ -1084,10 +1095,13 @@ const CreateTrek = () => {
                                                         {cities.map((city) => (
                                                             <SelectItem
                                                                 key={city.id}
-                                                                value={city.id}
+                                                                value={String(
+                                                                    city.id
+                                                                )}
                                                             >
-                                                                {city.name},{" "}
-                                                                {city.state}
+                                                                {city.name} (
+                                                                {city.stateName}
+                                                                )
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -1201,9 +1215,9 @@ const CreateTrek = () => {
                                                                                 key={
                                                                                     city.id
                                                                                 }
-                                                                                value={
+                                                                                value={String(
                                                                                     city.id
-                                                                                }
+                                                                                )}
                                                                             >
                                                                                 {
                                                                                     city.name
@@ -1211,7 +1225,7 @@ const CreateTrek = () => {
 
                                                                                 ,{" "}
                                                                                 {
-                                                                                    city.state
+                                                                                    city.stateName
                                                                                 }
                                                                             </SelectItem>
                                                                         )
