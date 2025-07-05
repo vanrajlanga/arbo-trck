@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { apiVendor } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,188 +86,160 @@ const EditTrek = () => {
         }
 
         // Load trek data
-        if (id) {
-            setLoading(true);
-            api.getTrekById(id)
-                .then((response) => {
-                    if (response.success && response.data) {
-                        try {
-                            const data = response.data;
+        const loadTrek = async () => {
+            if (!id) return;
 
-                            console.log("Raw trek data from backend:", data);
-                            console.log(
-                                "Inclusions type:",
-                                typeof data.inclusions,
-                                "Value:",
-                                data.inclusions
-                            );
-                            console.log(
-                                "Exclusions type:",
-                                typeof data.exclusions,
-                                "Value:",
-                                data.exclusions
-                            );
-                            console.log(
-                                "Itinerary data from backend:",
-                                data.itinerary
-                            );
+            try {
+                setLoading(true);
+                const response = await apiVendor.getTrekById(id);
 
-                            // Map basic trek data
-                            setTrek({
-                                name: data.name || "",
-                                destination: data.destination || "",
-                                description: data.description || "",
-                                trekType: data.trekType || "",
-                                category: data.category || "",
-                                duration: data.duration || "",
-                                durationDays: data.durationDays || "",
-                                durationNights: data.durationNights || "",
-                                price: data.price || "",
-                                difficulty: data.difficulty || "moderate",
-                                maxParticipants:
-                                    (typeof data.slots === "object"
-                                        ? data.slots.total
-                                        : data.slots) || "",
-                                startDate: data.startDate || "",
-                                endDate: data.endDate || "",
-                            });
+                if (response.success) {
+                    const trekData = response.data;
+                    console.log("Loaded trek data:", trekData);
 
-                            // Map inclusions and exclusions
-                            const processInclusions = (inclusions) => {
-                                if (!inclusions) return [];
-                                if (Array.isArray(inclusions)) {
-                                    return inclusions.map((item, index) => ({
-                                        id: `inclusion-${index}`,
-                                        item:
-                                            typeof item === "string"
-                                                ? item
-                                                : item.item || item.name || "",
-                                    }));
-                                }
-                                if (typeof inclusions === "string") {
-                                    return inclusions
-                                        .split("\n")
-                                        .filter((item) => item.trim())
-                                        .map((item, index) => ({
-                                            id: `inclusion-${index}`,
-                                            item: item.trim(),
-                                        }));
-                                }
-                                return [];
-                            };
+                    // Map basic trek data
+                    setTrek({
+                        name: trekData.name || "",
+                        destination: trekData.destination || "",
+                        description: trekData.description || "",
+                        trekType: trekData.trekType || "",
+                        category: trekData.category || "",
+                        duration: trekData.duration || "",
+                        durationDays: trekData.durationDays || "",
+                        durationNights: trekData.durationNights || "",
+                        price: trekData.price || "",
+                        difficulty: trekData.difficulty || "moderate",
+                        maxParticipants:
+                            (typeof trekData.slots === "object"
+                                ? trekData.slots.total
+                                : trekData.slots) || "",
+                        startDate: trekData.startDate || "",
+                        endDate: trekData.endDate || "",
+                    });
 
-                            const processExclusions = (exclusions) => {
-                                if (!exclusions) return [];
-                                if (Array.isArray(exclusions)) {
-                                    return exclusions.map((item, index) => ({
-                                        id: `exclusion-${index}`,
-                                        item:
-                                            typeof item === "string"
-                                                ? item
-                                                : item.item || item.name || "",
-                                    }));
-                                }
-                                if (typeof exclusions === "string") {
-                                    return exclusions
-                                        .split("\n")
-                                        .filter((item) => item.trim())
-                                        .map((item, index) => ({
-                                            id: `exclusion-${index}`,
-                                            item: item.trim(),
-                                        }));
-                                }
-                                return [];
-                            };
-
-                            setInclusions(processInclusions(data.inclusions));
-                            setExclusions(processExclusions(data.exclusions));
-
-                            // Map meeting point
-                            setMeetingPoint({
-                                id: "",
-                                cityId: "",
-                                cityName: "",
-                                locationDetails: data.meetingPoint || "",
-                                time: data.meetingTime || "",
-                            });
-
-                            // Map itinerary with proper structure for DynamicItinerary component
-                            const processItinerary = (itinerary) => {
-                                if (!itinerary || !Array.isArray(itinerary))
-                                    return [];
-
-                                return itinerary.map((dayData) => ({
-                                    day: dayData.day,
-                                    activities: Array.isArray(
-                                        dayData.activities
-                                    )
-                                        ? dayData.activities.map(
-                                              (activity, index) => ({
-                                                  id: `day${
-                                                      dayData.day
-                                                  }-activity${index + 1}`,
-                                                  activity:
-                                                      typeof activity ===
-                                                      "string"
-                                                          ? activity
-                                                          : activity.activity ||
-                                                            activity.name ||
-                                                            "",
-                                              })
-                                          )
-                                        : [],
-                                }));
-                            };
-
-                            setItinerary(processItinerary(data.itinerary));
-                            console.log(
-                                "Processed itinerary:",
-                                processItinerary(data.itinerary)
-                            );
-
-                            // Map trek stages
-                            setTrekStages(data.trekStages || []);
-
-                            // Map images
-                            setImages(data.images || []);
-
-                            // Map accommodations
-                            console.log(
-                                "Accommodations data from backend:",
-                                data.accommodations
-                            );
-                            setAccommodations(data.accommodations || []);
-
-                            // Initialize policies
-                            setPolicies([
-                                {
-                                    id: "default-cancellation",
-                                    title: "Cancellation Policy",
-                                    description:
-                                        "Standard cancellation terms and conditions",
-                                },
-                            ]);
-                        } catch (error) {
-                            console.error("Error processing trek data:", error);
-                            toast.error(
-                                "Error processing trek data. Please try again."
-                            );
-                            navigate("/vendor/treks");
+                    // Map inclusions and exclusions
+                    const processInclusions = (inclusions) => {
+                        if (!inclusions) return [];
+                        if (Array.isArray(inclusions)) {
+                            return inclusions.map((item, index) => ({
+                                id: `inclusion-${index}`,
+                                item:
+                                    typeof item === "string"
+                                        ? item
+                                        : item.item || item.name || "",
+                            }));
                         }
-                    } else {
-                        toast.error("Trek not found!");
-                        navigate("/vendor/treks");
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error loading trek:", error);
-                    toast.error("Failed to load trek. Please try again.");
+                        if (typeof inclusions === "string") {
+                            return inclusions
+                                .split("\n")
+                                .filter((item) => item.trim())
+                                .map((item, index) => ({
+                                    id: `inclusion-${index}`,
+                                    item: item.trim(),
+                                }));
+                        }
+                        return [];
+                    };
+
+                    const processExclusions = (exclusions) => {
+                        if (!exclusions) return [];
+                        if (Array.isArray(exclusions)) {
+                            return exclusions.map((item, index) => ({
+                                id: `exclusion-${index}`,
+                                item:
+                                    typeof item === "string"
+                                        ? item
+                                        : item.item || item.name || "",
+                            }));
+                        }
+                        if (typeof exclusions === "string") {
+                            return exclusions
+                                .split("\n")
+                                .filter((item) => item.trim())
+                                .map((item, index) => ({
+                                    id: `exclusion-${index}`,
+                                    item: item.trim(),
+                                }));
+                        }
+                        return [];
+                    };
+
+                    setInclusions(processInclusions(trekData.inclusions));
+                    setExclusions(processExclusions(trekData.exclusions));
+
+                    // Map meeting point
+                    setMeetingPoint({
+                        id: "",
+                        cityId: "",
+                        cityName: "",
+                        locationDetails: trekData.meetingPoint || "",
+                        time: trekData.meetingTime || "",
+                    });
+
+                    // Map itinerary with proper structure for DynamicItinerary component
+                    const processItinerary = (itinerary) => {
+                        if (!itinerary || !Array.isArray(itinerary)) return [];
+
+                        return itinerary.map((dayData) => ({
+                            day: dayData.day,
+                            activities: Array.isArray(dayData.activities)
+                                ? dayData.activities.map((activity, index) => ({
+                                      id: `day${dayData.day}-activity${
+                                          index + 1
+                                      }`,
+                                      activity:
+                                          typeof activity === "string"
+                                              ? activity
+                                              : activity.activity ||
+                                                activity.name ||
+                                                "",
+                                  }))
+                                : [],
+                        }));
+                    };
+
+                    setItinerary(processItinerary(trekData.itinerary));
+                    console.log(
+                        "Processed itinerary:",
+                        processItinerary(trekData.itinerary)
+                    );
+
+                    // Map trek stages
+                    setTrekStages(trekData.trekStages || []);
+
+                    // Map images
+                    setImages(trekData.images || []);
+
+                    // Map accommodations
+                    console.log(
+                        "Accommodations data from backend:",
+                        trekData.accommodations
+                    );
+                    setAccommodations(trekData.accommodations || []);
+
+                    // Initialize policies
+                    setPolicies([
+                        {
+                            id: "default-cancellation",
+                            title: "Cancellation Policy",
+                            description:
+                                "Standard cancellation terms and conditions",
+                        },
+                    ]);
+                } else {
+                    toast.error("Failed to load trek data");
                     navigate("/vendor/treks");
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        }
+                }
+            } catch (error) {
+                console.error("Error loading trek:", error);
+                toast.error("Failed to load trek");
+                navigate("/vendor/treks");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadTrek();
     }, [id, navigate]);
 
     // Handle input changes
@@ -602,73 +574,27 @@ const EditTrek = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Only submit when on the final step
-        if (currentStep !== "cancellation") {
+        if (!formData.name || !formData.destination || !formData.basePrice) {
+            toast.error("Please fill in all required fields");
             return;
         }
 
-        setSaving(true);
-
         try {
-            // Prepare data for submission
-            const formData = {
-                ...trek,
-                itinerary: itinerary.map((day, index) => ({
-                    day: day.day || index + 1,
-                    activities: Array.isArray(day.activities)
-                        ? day.activities
-                              .map((activity) =>
-                                  typeof activity === "string"
-                                      ? activity
-                                      : activity.activity || activity.name || ""
-                              )
-                              .filter((activity) => activity.trim() !== "")
-                        : [],
-                })),
-                trekStages: trekStages.map((stage) => ({
-                    name: stage.name,
-                    description: stage.description,
-                    distance: stage.distance || "",
-                    duration: stage.duration || "",
-                })),
-                inclusions: inclusions
-                    .map((inc) => inc.item)
-                    .filter((item) => item.trim() !== ""),
-                exclusions: exclusions
-                    .map((exc) => exc.item)
-                    .filter((item) => item.trim() !== ""),
-                meetingPoint: meetingPoint.locationDetails,
-                meetingTime: meetingPoint.time,
-                images: images,
-                accommodations: accommodations,
-                policies: policies,
-                maxParticipants: parseInt(trek.maxParticipants) || 10,
-                price: parseFloat(trek.price) || 0,
-            };
+            setIsSubmitting(true);
 
-            console.log("Submitting trek data:", formData);
-            console.log(
-                "Itinerary being sent:",
-                JSON.stringify(formData.itinerary, null, 2)
-            );
-            console.log(
-                "Accommodations being sent:",
-                JSON.stringify(formData.accommodations, null, 2)
-            );
-
-            const response = await api.updateTrek(id, formData);
+            const response = await apiVendor.updateTrek(id, formData);
 
             if (response.success) {
                 toast.success("Trek updated successfully!");
                 navigate("/vendor/treks");
             } else {
-                toast.error(response.error || "Failed to update trek");
+                toast.error(response.message || "Failed to update trek");
             }
         } catch (error) {
             console.error("Error updating trek:", error);
-            toast.error("Failed to update trek. Please try again.");
+            toast.error("Failed to update trek: " + error.message);
         } finally {
-            setSaving(false);
+            setIsSubmitting(false);
         }
     };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { apiVendor } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -274,15 +274,20 @@ const CreateTrek = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Only submit when on the final step
-        if (currentStep !== "cancellation") {
+        // Basic validation
+        if (!trek.name || !trek.destination || !trek.price) {
+            toast.error("Please fill in all required fields");
             return;
         }
 
-        setLoading(true);
+        if (images.length === 0) {
+            toast.error("Please upload at least one image");
+            return;
+        }
 
         try {
-            // Prepare trek data for API
+            setLoading(true);
+
             const trekData = {
                 name: trek.name,
                 destination: trek.destination,
@@ -297,7 +302,7 @@ const CreateTrek = () => {
                 maxParticipants: parseInt(trek.maxParticipants) || 20,
                 startDate: trek.startDate,
                 endDate: trek.endDate,
-                meetingPoint: `${meetingPoint.locationDetails}`,
+                meetingPoint: meetingPoint.locationDetails,
                 meetingTime: meetingPoint.time,
                 inclusions: inclusions.map((inc) => inc.item),
                 exclusions: exclusions.map((exc) => exc.item),
@@ -317,18 +322,19 @@ const CreateTrek = () => {
                 status: "active",
             };
 
-            // Create trek via API
-            const response = await api.createTrek(trekData);
+            console.log("Submitting trek data:", trekData);
+
+            const response = await apiVendor.createTrek(trekData);
 
             if (response.success) {
                 toast.success("Trek created successfully!");
                 navigate("/vendor/treks");
             } else {
-                throw new Error(response.message || "Failed to create trek");
+                toast.error(response.message || "Failed to create trek");
             }
         } catch (error) {
             console.error("Error creating trek:", error);
-            toast.error(error.message || "Failed to create trek");
+            toast.error("Failed to create trek: " + error.message);
         } finally {
             setLoading(false);
         }

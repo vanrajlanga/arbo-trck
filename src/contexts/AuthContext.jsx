@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api, apiAdmin, apiVendor } from "@/lib/api";
 
 const AuthContext = createContext(undefined);
 
@@ -29,6 +29,10 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(true);
         try {
             console.log("AuthContext: Attempting login for", email);
+
+            // Try to determine if this is an admin or vendor login
+            // For now, we'll use the legacy api.login which handles both
+            // In the future, you might want to add role-specific login endpoints
             const data = await api.login(email, password);
             const { user, token } = data;
 
@@ -64,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        console.log("AuthContext: Logging out user");
+        console.log("AuthContext: Logging out");
         setUser(null);
         localStorage.removeItem("aorboUser");
         localStorage.removeItem("aorboToken");
@@ -72,10 +76,19 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        isLoading,
         login,
         register,
         logout,
-        isLoading,
+        // Helper functions to get the appropriate API based on user role
+        getApi: () => {
+            if (!user) return api;
+            if (user.role === "admin") return apiAdmin;
+            if (user.role === "vendor") return apiVendor;
+            return api; // fallback to legacy api
+        },
+        isAdmin: () => user?.role === "admin",
+        isVendor: () => user?.role === "vendor",
     };
 
     return (

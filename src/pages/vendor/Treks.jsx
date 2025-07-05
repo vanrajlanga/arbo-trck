@@ -45,7 +45,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { api } from "@/lib/api";
+import { apiVendor } from "@/lib/api";
 
 const Treks = () => {
     const navigate = useNavigate();
@@ -62,7 +62,7 @@ const Treks = () => {
     const loadTreks = async () => {
         try {
             setLoading(true);
-            const response = await api.getVendorTreks();
+            const response = await apiVendor.getTreks();
             console.log("Raw trek data from backend:", response.data[0]); // Debug log
             setTreks(response.data);
         } catch (error) {
@@ -97,7 +97,7 @@ const Treks = () => {
         if (!selectedTrek) return;
 
         try {
-            const response = await api.deleteTrek(selectedTrek.id);
+            const response = await apiVendor.deleteTrek(selectedTrek.id);
             if (response.success) {
                 toast.success("Trek deleted successfully!");
                 setTreks(treks.filter((trek) => trek.id !== selectedTrek.id));
@@ -115,7 +115,7 @@ const Treks = () => {
     // Handle status toggle
     const handleStatusToggle = async (trek) => {
         try {
-            const response = await api.toggleTrekStatus(trek.id);
+            const response = await apiVendor.toggleTrekStatus(trek.id);
             if (response.success) {
                 const newStatus =
                     response.data.status === "published" ? "active" : "draft";

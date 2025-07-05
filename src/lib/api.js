@@ -44,7 +44,274 @@ export const apiCall = async (endpoint, options = {}) => {
     }
 };
 
-// Legacy API methods (for existing frontend)
+// Admin API methods (for admin panel)
+export const apiAdmin = {
+    // Auth endpoints
+    login: (email, password) =>
+        apiCall("/api/admin/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+        }),
+
+    logout: () =>
+        apiCall("/api/admin/auth/logout", {
+            method: "POST",
+        }),
+
+    getProfile: () => apiCall("/api/admin/auth/profile"),
+    updateProfile: (profileData) =>
+        apiCall("/api/admin/auth/profile", {
+            method: "PUT",
+            body: JSON.stringify(profileData),
+        }),
+
+    // User endpoints
+    getUsers: () => apiCall("/api/admin/users"),
+    getUserById: (id) => apiCall(`/api/admin/users/${id}`),
+    createUser: (userData) =>
+        apiCall("/api/admin/users", {
+            method: "POST",
+            body: JSON.stringify(userData),
+        }),
+    updateUser: (id, userData) =>
+        apiCall(`/api/admin/users/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(userData),
+        }),
+    deleteUser: (id) =>
+        apiCall(`/api/admin/users/${id}`, {
+            method: "DELETE",
+        }),
+
+    // Vendor endpoints
+    getVendors: () => apiCall("/api/admin/vendors"),
+    getVendorById: (id) => apiCall(`/api/admin/vendors/${id}`),
+    createVendor: (vendorData) =>
+        apiCall("/api/admin/vendors", {
+            method: "POST",
+            body: JSON.stringify(vendorData),
+        }),
+    updateVendor: (id, vendorData) =>
+        apiCall(`/api/admin/vendors/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(vendorData),
+        }),
+    updateVendorStatus: (id, status) =>
+        apiCall(`/api/admin/vendors/${id}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status }),
+        }),
+
+    // Trek endpoints
+    getAllTreks: () => apiCall("/api/admin/treks"),
+    getTrekById: (id) => apiCall(`/api/admin/treks/${id}`),
+    createTrek: (trekData) =>
+        apiCall("/api/admin/treks", {
+            method: "POST",
+            body: JSON.stringify(trekData),
+        }),
+    updateTrek: (id, trekData) =>
+        apiCall(`/api/admin/treks/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(trekData),
+        }),
+    deleteTrek: (id) =>
+        apiCall(`/api/admin/treks/${id}`, {
+            method: "DELETE",
+        }),
+    toggleTrekStatus: (id) =>
+        apiCall(`/api/admin/treks/${id}/status`, {
+            method: "PATCH",
+        }),
+
+    // Location endpoints
+    getCities: () => apiCall("/api/admin/locations/cities"),
+    getCityById: (id) => apiCall(`/api/admin/locations/cities/${id}`),
+    createCity: (cityData) =>
+        apiCall("/api/admin/locations/cities", {
+            method: "POST",
+            body: JSON.stringify(cityData),
+        }),
+    updateCity: (id, cityData) =>
+        apiCall(`/api/admin/locations/cities/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(cityData),
+        }),
+    deleteCity: (id) =>
+        apiCall(`/api/admin/locations/cities/${id}`, {
+            method: "DELETE",
+        }),
+
+    // Booking endpoints
+    getAllBookings: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/admin/bookings${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getBookingById: (id) => apiCall(`/api/admin/bookings/${id}`),
+    updateBookingStatus: (id, status) =>
+        apiCall(`/api/admin/bookings/${id}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status }),
+        }),
+
+    // Customer endpoints
+    getAllCustomers: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/admin/customers${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getCustomerById: (id) => apiCall(`/api/admin/customers/${id}`),
+    updateCustomer: (id, customerData) =>
+        apiCall(`/api/admin/customers/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(customerData),
+        }),
+};
+
+// Vendor API methods (for vendor panel)
+export const apiVendor = {
+    // Auth endpoints
+    login: (email, password) =>
+        apiCall("/api/vendor/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+        }),
+
+    logout: () =>
+        apiCall("/api/vendor/auth/logout", {
+            method: "POST",
+        }),
+
+    getProfile: () => apiCall("/api/vendor/auth/profile"),
+    updateProfile: (profileData) =>
+        apiCall("/api/vendor/auth/profile", {
+            method: "PUT",
+            body: JSON.stringify(profileData),
+        }),
+
+    // Trek endpoints
+    getTreks: () => apiCall("/api/vendor/treks"),
+    getTrekById: (id) => apiCall(`/api/vendor/treks/${id}`),
+    createTrek: (trekData) =>
+        apiCall("/api/vendor/treks", {
+            method: "POST",
+            body: JSON.stringify(trekData),
+        }),
+    updateTrek: (id, trekData) =>
+        apiCall(`/api/vendor/treks/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(trekData),
+        }),
+    deleteTrek: (id) =>
+        apiCall(`/api/vendor/treks/${id}`, {
+            method: "DELETE",
+        }),
+    toggleTrekStatus: (id) =>
+        apiCall(`/api/vendor/treks/${id}/status`, {
+            method: "PATCH",
+        }),
+
+    // Booking endpoints
+    getBookings: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/bookings${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getBookingById: (id) => apiCall(`/api/vendor/bookings/${id}`),
+    createBooking: (bookingData) =>
+        apiCall("/api/vendor/bookings", {
+            method: "POST",
+            body: JSON.stringify(bookingData),
+        }),
+    updateBookingStatus: (id, status) =>
+        apiCall(`/api/vendor/bookings/${id}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status }),
+        }),
+    getBookingParticipants: (id) =>
+        apiCall(`/api/vendor/bookings/${id}/participants`),
+    getBookingAnalytics: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/bookings/analytics${
+                queryString ? `?${queryString}` : ""
+            }`
+        );
+    },
+
+    // Customer endpoints
+    getCustomers: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/customers${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getCustomerById: (id) => apiCall(`/api/vendor/customers/${id}`),
+    getCustomerAnalytics: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/customers/analytics${
+                queryString ? `?${queryString}` : ""
+            }`
+        );
+    },
+    updateCustomer: (id, customerData) =>
+        apiCall(`/api/vendor/customers/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(customerData),
+        }),
+    addCustomer: (customerData) =>
+        apiCall("/api/vendor/customers", {
+            method: "POST",
+            body: JSON.stringify(customerData),
+        }),
+
+    // Location endpoints
+    getCities: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/locations/cities${
+                queryString ? `?${queryString}` : ""
+            }`
+        );
+    },
+    getCityById: (id) => apiCall(`/api/vendor/locations/cities/${id}`),
+    createCity: (cityData) =>
+        apiCall("/api/vendor/locations/cities", {
+            method: "POST",
+            body: JSON.stringify(cityData),
+        }),
+    updateCity: (id, cityData) =>
+        apiCall(`/api/vendor/locations/cities/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(cityData),
+        }),
+    deleteCity: (id) =>
+        apiCall(`/api/vendor/locations/cities/${id}`, {
+            method: "DELETE",
+        }),
+    getPickupPoints: () => apiCall("/api/vendor/locations/pickup-points"),
+    createPickupPoint: (pickupPointData) =>
+        apiCall("/api/vendor/locations/pickup-points", {
+            method: "POST",
+            body: JSON.stringify(pickupPointData),
+        }),
+    updatePickupPoint: (id, pickupPointData) =>
+        apiCall(`/api/vendor/locations/pickup-points/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(pickupPointData),
+        }),
+    deletePickupPoint: (id) =>
+        apiCall(`/api/vendor/locations/pickup-points/${id}`, {
+            method: "DELETE",
+        }),
+};
+
+// Legacy API methods (for backward compatibility)
 export const api = {
     // Auth endpoints
     login: (email, password) =>
@@ -85,7 +352,7 @@ export const api = {
             body: JSON.stringify({ status }),
         }),
 
-    // Trek endpoints
+    // Trek endpoints (using new vendor structure)
     getVendorTreks: () => apiCall("/api/vendor/treks"),
     getTrekById: (id) => apiCall(`/api/vendor/treks/${id}`),
     createTrek: (trekData) =>
@@ -107,32 +374,37 @@ export const api = {
             method: "PATCH",
         }),
 
-    // Admin Trek endpoints
+    // Admin Trek endpoints (using new admin structure)
     getAllTreks: () => apiCall("/api/admin/treks"),
 
-    // Customer endpoints (frontend)
+    // Customer endpoints (using new vendor structure)
     getVendorCustomers: (params = {}) => {
         const queryString = new URLSearchParams(params).toString();
         return apiCall(
-            `/api/vendors/customers${queryString ? `?${queryString}` : ""}`
+            `/api/vendor/customers${queryString ? `?${queryString}` : ""}`
         );
     },
-    getCustomerById: (id) => apiCall(`/api/vendors/customers/${id}`),
+    getCustomerById: (id) => apiCall(`/api/vendor/customers/${id}`),
     getCustomerAnalytics: (params = {}) => {
         const queryString = new URLSearchParams(params).toString();
         return apiCall(
-            `/api/vendors/customers/analytics${
+            `/api/vendor/customers/analytics${
                 queryString ? `?${queryString}` : ""
             }`
         );
     },
     updateCustomer: (id, customerData) =>
-        apiCall(`/api/vendors/customers/${id}`, {
+        apiCall(`/api/vendor/customers/${id}`, {
             method: "PUT",
             body: JSON.stringify(customerData),
         }),
+    addCustomer: (customerData) =>
+        apiCall("/api/vendor/customers", {
+            method: "POST",
+            body: JSON.stringify(customerData),
+        }),
 
-    // Booking endpoints (frontend)
+    // Booking endpoints (using new vendor structure)
     getAllBookings: (params = {}) => {
         const queryString = new URLSearchParams(params).toString();
         return apiCall(`/api/bookings${queryString ? `?${queryString}` : ""}`);
@@ -153,9 +425,38 @@ export const api = {
             method: "PATCH",
             body: JSON.stringify({ reason }),
         }),
+
+    // Vendor booking endpoints (using new vendor structure)
+    createVendorBooking: (bookingData) =>
+        apiCall("/api/vendor/bookings", {
+            method: "POST",
+            body: JSON.stringify(bookingData),
+        }),
+    getVendorBookings: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/bookings${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getVendorBookingById: (id) => apiCall(`/api/vendor/bookings/${id}`),
+    updateVendorBookingStatus: (id, status) =>
+        apiCall(`/api/vendor/bookings/${id}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status }),
+        }),
+    getVendorBookingParticipants: (id) =>
+        apiCall(`/api/vendor/bookings/${id}/participants`),
+    getVendorBookingAnalytics: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/bookings/analytics${
+                queryString ? `?${queryString}` : ""
+            }`
+        );
+    },
 };
 
-// V1 API methods (for mobile app and future use)
+// V1 API methods (for mobile app)
 export const apiV1 = {
     // Auth endpoints
     login: (email, password) =>
@@ -300,12 +601,6 @@ export const apiV1 = {
             method: "PUT",
             body: JSON.stringify(customerData),
         }),
-
-    // Booking endpoints (coming soon)
-    // createBooking: (bookingData) => apiCall("/api/v1/bookings", { ... }),
-    // getUserBookings: () => apiCall("/api/v1/bookings/my-bookings"),
-    // getBookingById: (id) => apiCall(`/api/v1/bookings/${id}`),
-    // cancelBooking: (id, reason) => apiCall(`/api/v1/bookings/${id}/cancel`, { ... }),
 };
 
 export default api;
