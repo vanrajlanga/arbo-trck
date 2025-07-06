@@ -69,7 +69,7 @@ const CreateTrek = () => {
                     apiVendor.getDestinations({ status: "active" }),
                     apiVendor.getCities({ status: "active" }),
                 ]);
-                setDestinations(destRes.data || []);
+                setDestinations(destRes.data?.destinations || []);
                 setCities(cityRes.data?.cities || []);
             } catch (err) {
                 toast.error("Failed to load destinations or cities");
@@ -203,7 +203,7 @@ const CreateTrek = () => {
             if (selectedCity) {
                 setMeetingPoint((prev) => ({
                     ...prev,
-                    cityName: selectedCity.name,
+                    cityName: selectedCity.cityName,
                 }));
             }
         }
@@ -231,7 +231,7 @@ const CreateTrek = () => {
                             (city) => city.id === value
                         );
                         if (selectedCity) {
-                            updatedPoint.cityName = selectedCity.name;
+                            updatedPoint.cityName = selectedCity.cityName;
                         }
                     }
 
@@ -572,14 +572,18 @@ const CreateTrek = () => {
                                                 <SelectValue placeholder="Select destination" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {destinations.map((dest) => (
-                                                    <SelectItem
-                                                        key={dest.id}
-                                                        value={String(dest.id)}
-                                                    >
-                                                        {dest.name}
-                                                    </SelectItem>
-                                                ))}
+                                                {(destinations || []).map(
+                                                    (dest) => (
+                                                        <SelectItem
+                                                            key={dest.id}
+                                                            value={String(
+                                                                dest.id
+                                                            )}
+                                                        >
+                                                            {dest.name}
+                                                        </SelectItem>
+                                                    )
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -1092,18 +1096,26 @@ const CreateTrek = () => {
                                                         <SelectValue placeholder="Select city" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {cities.map((city) => (
-                                                            <SelectItem
-                                                                key={city.id}
-                                                                value={String(
-                                                                    city.id
-                                                                )}
-                                                            >
-                                                                {city.name} (
-                                                                {city.stateName}
-                                                                )
-                                                            </SelectItem>
-                                                        ))}
+                                                        {(cities || []).map(
+                                                            (city) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        city.id
+                                                                    }
+                                                                    value={String(
+                                                                        city.id
+                                                                    )}
+                                                                >
+                                                                    {
+                                                                        city.cityName
+                                                                    }
+                                                                    ,{" "}
+                                                                    {
+                                                                        city.stateName
+                                                                    }
+                                                                </SelectItem>
+                                                            )
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -1207,7 +1219,10 @@ const CreateTrek = () => {
                                                                     <SelectValue placeholder="Select city" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    {cities.map(
+                                                                    {(
+                                                                        cities ||
+                                                                        []
+                                                                    ).map(
                                                                         (
                                                                             city
                                                                         ) => (
@@ -1220,7 +1235,7 @@ const CreateTrek = () => {
                                                                                 )}
                                                                             >
                                                                                 {
-                                                                                    city.name
+                                                                                    city.cityName
                                                                                 }
 
                                                                                 ,{" "}

@@ -28,12 +28,14 @@ const EditTrek = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [cities, setCities] = useState([]);
+    const [destinations, setDestinations] = useState([]);
     const [currentStep, setCurrentStep] = useState("basic-info");
 
     // Trek data state matching CreateTrek structure
     const [trek, setTrek] = useState({
         name: "",
         destination: "",
+        destination_id: "",
         description: "",
         trekType: "",
         category: "",
@@ -65,25 +67,20 @@ const EditTrek = () => {
 
     // Load cities and trek data on component mount
     useEffect(() => {
-        // Load cities from localStorage
-        const savedCities = localStorage.getItem("vendorCities");
-        if (savedCities) {
-            setCities(JSON.parse(savedCities));
-        } else {
-            // Default cities if none exist
-            const defaultCities = [
-                { id: "1", name: "Hyderabad", state: "Telangana" },
-                { id: "2", name: "Warangal", state: "Telangana" },
-                { id: "3", name: "Khammam", state: "Telangana" },
-                { id: "4", name: "Vijayawada", state: "Andhra Pradesh" },
-                { id: "5", name: "Visakhapatnam", state: "Andhra Pradesh" },
-                { id: "6", name: "Guntur", state: "Andhra Pradesh" },
-                { id: "7", name: "Chennai", state: "Tamil Nadu" },
-                { id: "8", name: "Bangalore", state: "Karnataka" },
-            ];
-            setCities(defaultCities);
-            localStorage.setItem("vendorCities", JSON.stringify(defaultCities));
+        // Fetch destinations and cities from API
+        async function fetchData() {
+            try {
+                const [destRes, cityRes] = await Promise.all([
+                    apiVendor.getDestinations({ status: "active" }),
+                    apiVendor.getCities({ status: "active" }),
+                ]);
+                setDestinations(destRes.data?.destinations || []);
+                setCities(cityRes.data?.cities || []);
+            } catch (err) {
+                toast.error("Failed to load destinations or cities");
+            }
         }
+        fetchData();
 
         // Load trek data
         const loadTrek = async () => {
@@ -101,6 +98,7 @@ const EditTrek = () => {
                     setTrek({
                         name: trekData.name || "",
                         destination: trekData.destination || "",
+                        destination_id: trekData.destination_id || "",
                         description: trekData.description || "",
                         trekType: trekData.trekType || "",
                         category: trekData.category || "",
@@ -353,7 +351,7 @@ const EditTrek = () => {
             if (selectedCity) {
                 setMeetingPoint((prev) => ({
                     ...prev,
-                    cityName: selectedCity.name,
+                    cityName: selectedCity.cityName,
                 }));
             }
         }
@@ -384,7 +382,7 @@ const EditTrek = () => {
                             (city) => city.id === value
                         );
                         if (selectedCity) {
-                            updated.cityName = selectedCity.name;
+                            updated.cityName = selectedCity.cityName;
                         }
                     }
                     return updated;
@@ -806,14 +804,33 @@ const EditTrek = () => {
                                         <Label htmlFor="destination">
                                             Destination *
                                         </Label>
-                                        <Input
-                                            id="destination"
-                                            name="destination"
-                                            value={trek.destination}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter destination"
-                                            required
-                                        />
+                                        <Select
+                                            value={trek.destination_id}
+                                            onValueChange={(value) =>
+                                                handleSelectChange(
+                                                    "destination_id",
+                                                    value
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select destination" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {(destinations || []).map(
+                                                    (dest) => (
+                                                        <SelectItem
+                                                            key={dest.id}
+                                                            value={String(
+                                                                dest.id
+                                                            )}
+                                                        >
+                                                            {dest.name}
+                                                        </SelectItem>
+                                                    )
+                                                )}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div>
                                         <Label htmlFor="description">
@@ -1316,8 +1333,8 @@ const EditTrek = () => {
                                                         key={city.id}
                                                         value={city.id}
                                                     >
-                                                        {city.name},{" "}
-                                                        {city.state}
+                                                        {city.cityName},{" "}
+                                                        {city.stateName}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -1416,11 +1433,11 @@ const EditTrek = () => {
                                                                         }
                                                                     >
                                                                         {
-                                                                            city.name
+                                                                            city.cityName
                                                                         }
                                                                         ,{" "}
                                                                         {
-                                                                            city.state
+                                                                            city.stateName
                                                                         }
                                                                     </SelectItem>
                                                                 )

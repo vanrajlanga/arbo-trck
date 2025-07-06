@@ -337,6 +337,11 @@ export const apiVendor = {
             method: "PATCH",
         }),
     getPopularDestinations: () => apiCall("/api/vendor/destinations/popular"),
+
+    // States endpoint
+    getStates: () => {
+        return apiCall("/api/vendor/locations/states");
+    },
 };
 
 // Legacy API methods (for backward compatibility)

@@ -29,15 +29,10 @@ import {
     Trash2,
     Eye,
     Loader2,
-    Filter,
     Mountain,
-    MapPin,
     Star,
     Globe,
     TrendingUp,
-    Calendar,
-    Thermometer,
-    Activity,
     RefreshCw,
     MoreHorizontal,
 } from "lucide-react";
@@ -63,38 +58,20 @@ const Destinations = () => {
     const [destinations, setDestinations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [regionFilter, setRegionFilter] = useState("all");
-    const [difficultyFilter, setDifficultyFilter] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedDestination, setSelectedDestination] = useState(null);
+    const [states, setStates] = useState([]);
+    const [loadingStates, setLoadingStates] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
-        description: "",
-        region: "North",
         state: "",
-        altitude: "",
-        bestTimeToVisit: [],
-        difficulty: "moderate",
-        trekType: "mountain",
         isPopular: false,
         status: "active",
-        imageUrl: "",
-        coordinates: "",
     });
 
-    const regions = ["North", "South", "East", "West", "Central", "North-East"];
-    const difficulties = ["easy", "moderate", "difficult", "extreme"];
-    const trekTypes = [
-        "mountain",
-        "forest",
-        "desert",
-        "coastal",
-        "hill-station",
-        "adventure",
-    ];
     const statuses = ["active", "inactive", "planning"];
 
     const fetchDestinations = async () => {
@@ -102,7 +79,7 @@ const Destinations = () => {
             setLoading(true);
             const response = await apiVendor.getDestinations();
             if (response.success) {
-                setDestinations(response.data || []);
+                setDestinations(response.data.destinations || []);
             } else {
                 toast.error("Failed to load destinations");
             }
@@ -116,28 +93,19 @@ const Destinations = () => {
 
     useEffect(() => {
         fetchDestinations();
+        fetchStates();
     }, []);
 
     const filteredDestinations = destinations.filter((destination) => {
         const matchesSearch =
             searchTerm === "" ||
             destination.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            destination.description
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
             destination.state.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesRegion =
-            regionFilter === "all" || destination.region === regionFilter;
-        const matchesDifficulty =
-            difficultyFilter === "all" ||
-            destination.difficulty === difficultyFilter;
         const matchesStatus =
             statusFilter === "all" || destination.status === statusFilter;
 
-        return (
-            matchesSearch && matchesRegion && matchesDifficulty && matchesStatus
-        );
+        return matchesSearch && matchesStatus;
     });
 
     const handleInputChange = (e) => {
@@ -200,17 +168,9 @@ const Destinations = () => {
     const resetForm = () => {
         setFormData({
             name: "",
-            description: "",
-            region: "North",
             state: "",
-            altitude: "",
-            bestTimeToVisit: [],
-            difficulty: "moderate",
-            trekType: "mountain",
             isPopular: false,
             status: "active",
-            imageUrl: "",
-            coordinates: "",
         });
     };
 
@@ -231,21 +191,6 @@ const Destinations = () => {
         setIsViewDialogOpen(true);
     };
 
-    const getDifficultyColor = (difficulty) => {
-        switch (difficulty) {
-            case "easy":
-                return "bg-green-100 text-green-800";
-            case "moderate":
-                return "bg-yellow-100 text-yellow-800";
-            case "difficult":
-                return "bg-orange-100 text-orange-800";
-            case "extreme":
-                return "bg-red-100 text-red-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
-
     const getStatusColor = (status) => {
         switch (status) {
             case "active":
@@ -256,6 +201,20 @@ const Destinations = () => {
                 return "bg-blue-100 text-blue-800";
             default:
                 return "bg-gray-100 text-gray-800";
+        }
+    };
+
+    // Fetch states
+    const fetchStates = async () => {
+        setLoadingStates(true);
+        try {
+            const response = await apiVendor.getStates();
+            setStates(response.data || []);
+        } catch (error) {
+            console.error("Error fetching states:", error);
+            toast.error("Failed to fetch states");
+        } finally {
+            setLoadingStates(false);
         }
     };
 
@@ -334,75 +293,37 @@ const Destinations = () => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                            Regions Covered
+                            States Covered
                         </CardTitle>
                         <Globe className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {new Set(destinations.map((d) => d.region)).size}
+                            {new Set(destinations.map((d) => d.state)).size}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Different regions
+                            Different states
                         </p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Filters */}
+            {/* Search */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Filters</CardTitle>
+                    <CardTitle>Search</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="relative">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Search destinations..."
+                                placeholder="Search destinations by name or state..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-8"
                             />
                         </div>
-                        <Select
-                            value={regionFilter}
-                            onValueChange={setRegionFilter}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Filter by region" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Regions</SelectItem>
-                                {regions.map((region) => (
-                                    <SelectItem key={region} value={region}>
-                                        {region}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            value={difficultyFilter}
-                            onValueChange={setDifficultyFilter}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Filter by difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    All Difficulties
-                                </SelectItem>
-                                {difficulties.map((difficulty) => (
-                                    <SelectItem
-                                        key={difficulty}
-                                        value={difficulty}
-                                    >
-                                        {difficulty.charAt(0).toUpperCase() +
-                                            difficulty.slice(1)}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                         <Select
                             value={statusFilter}
                             onValueChange={setStatusFilter}
@@ -457,10 +378,7 @@ const Destinations = () => {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Name</TableHead>
-                                        <TableHead>Region</TableHead>
                                         <TableHead>State</TableHead>
-                                        <TableHead>Difficulty</TableHead>
-                                        <TableHead>Altitude</TableHead>
                                         <TableHead>Popular</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">
@@ -472,7 +390,7 @@ const Destinations = () => {
                                     {filteredDestinations.length === 0 ? (
                                         <TableRow>
                                             <TableCell
-                                                colSpan={8}
+                                                colSpan={5}
                                                 className="text-center py-8"
                                             >
                                                 <div className="flex flex-col items-center space-y-2">
@@ -491,28 +409,7 @@ const Destinations = () => {
                                                         {destination.name}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge variant="outline">
-                                                            {destination.region}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
                                                         {destination.state}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            className={getDifficultyColor(
-                                                                destination.difficulty
-                                                            )}
-                                                        >
-                                                            {
-                                                                destination.difficulty
-                                                            }
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {destination.altitude
-                                                            ? `${destination.altitude}m`
-                                                            : "-"}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Button
@@ -623,189 +520,49 @@ const Destinations = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Name *</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="region">Region *</Label>
-                                <Select
-                                    value={formData.region}
-                                    onValueChange={(value) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            region: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {regions.map((region) => (
-                                            <SelectItem
-                                                key={region}
-                                                value={region}
-                                            >
-                                                {region}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
                         <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea
-                                id="description"
-                                name="description"
-                                value={formData.description}
+                            <Label htmlFor="name">Name *</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                value={formData.name}
                                 onChange={handleInputChange}
-                                rows={3}
+                                required
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="state">State</Label>
-                                <Input
-                                    id="state"
-                                    name="state"
-                                    value={formData.state}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="altitude">
-                                    Altitude (meters)
-                                </Label>
-                                <Input
-                                    id="altitude"
-                                    name="altitude"
-                                    type="number"
-                                    value={formData.altitude}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="difficulty">Difficulty</Label>
-                                <Select
-                                    value={formData.difficulty}
-                                    onValueChange={(value) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            difficulty: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {difficulties.map((difficulty) => (
-                                            <SelectItem
-                                                key={difficulty}
-                                                value={difficulty}
-                                            >
-                                                {difficulty
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    difficulty.slice(1)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="trekType">Trek Type</Label>
-                                <Select
-                                    value={formData.trekType}
-                                    onValueChange={(value) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            trekType: value,
-                                        }))
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {trekTypes.map((type) => (
-                                            <SelectItem key={type} value={type}>
-                                                {type.charAt(0).toUpperCase() +
-                                                    type.slice(1)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
                         <div className="space-y-2">
-                            <Label htmlFor="bestTimeToVisit">
-                                Best Time to Visit (comma separated)
-                            </Label>
-                            <Input
-                                id="bestTimeToVisit"
-                                name="bestTimeToVisit"
-                                value={
-                                    Array.isArray(formData.bestTimeToVisit)
-                                        ? formData.bestTimeToVisit.join(", ")
-                                        : formData.bestTimeToVisit
-                                }
-                                onChange={(e) =>
+                            <Label htmlFor="state">State</Label>
+                            <Select
+                                value={formData.state}
+                                onValueChange={(value) =>
                                     setFormData((prev) => ({
                                         ...prev,
-                                        bestTimeToVisit: e.target.value
-                                            .split(",")
-                                            .map((s) => s.trim()),
+                                        state: value,
                                     }))
                                 }
-                                placeholder="e.g., March to June, September to November"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="imageUrl">Image URL</Label>
-                                <Input
-                                    id="imageUrl"
-                                    name="imageUrl"
-                                    value={formData.imageUrl}
-                                    onChange={handleInputChange}
-                                    placeholder="https://example.com/image.jpg"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="coordinates">
-                                    Coordinates (JSON)
-                                </Label>
-                                <Input
-                                    id="coordinates"
-                                    name="coordinates"
-                                    value={
-                                        typeof formData.coordinates === "string"
-                                            ? formData.coordinates
-                                            : JSON.stringify(
-                                                  formData.coordinates
-                                              )
-                                    }
-                                    onChange={handleInputChange}
-                                    placeholder='{"lat": 28.6139, "lng": 77.2090}'
-                                />
-                            </div>
+                                disabled={loadingStates}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue
+                                        placeholder={
+                                            loadingStates
+                                                ? "Loading states..."
+                                                : "Select a state"
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {states.map((state) => (
+                                        <SelectItem
+                                            key={state.name}
+                                            value={state.name}
+                                        >
+                                            {state.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -943,7 +700,7 @@ const Destinations = () => {
                                         Difficulty
                                     </Label>
                                     <Badge
-                                        className={getDifficultyColor(
+                                        className={getStatusColor(
                                             selectedDestination.difficulty
                                         )}
                                     >
