@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
     Select,
     SelectContent,
@@ -33,7 +34,7 @@ const DynamicAccommodation = ({ duration, accommodations, onChange }) => {
                 newAccommodations.push({
                     night: i,
                     type: "",
-                    name: "",
+                    date: "",
                     description: "",
                     location: "",
                 });
@@ -169,20 +170,27 @@ const DynamicAccommodation = ({ duration, accommodations, onChange }) => {
                                         /*#__PURE__*/ _jsxs("div", {
                                             children: [
                                                 /*#__PURE__*/ _jsx(Label, {
-                                                    htmlFor: `name-${accommodation.night}`,
+                                                    htmlFor: `date-${accommodation.night}`,
                                                     children:
-                                                        "Accommodation Name",
+                                                        "Accommodation Date",
                                                 }),
-                                                /*#__PURE__*/ _jsx(Input, {
-                                                    id: `name-${accommodation.night}`,
-                                                    placeholder:
-                                                        "Enter accommodation name",
-                                                    value: accommodation.name,
-                                                    onChange: (e) =>
+                                                /*#__PURE__*/ _jsx(DatePicker, {
+                                                    date: accommodation.date
+                                                        ? new Date(
+                                                              accommodation.date
+                                                          )
+                                                        : null,
+                                                    setDate: (date) =>
                                                         updateAccommodation(
                                                             nightIndex,
-                                                            "name",
-                                                            e.target.value
+                                                            "date",
+                                                            date
+                                                                ? date
+                                                                      .toISOString()
+                                                                      .split(
+                                                                          "T"
+                                                                      )[0]
+                                                                : ""
                                                         ),
                                                 }),
                                             ],

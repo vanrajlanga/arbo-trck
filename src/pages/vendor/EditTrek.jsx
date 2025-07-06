@@ -697,6 +697,12 @@ const EditTrek = () => {
                 meetingTime: meetingPoint.time,
                 inclusions: inclusions.map((inc) => inc.item),
                 exclusions: exclusions.map((exc) => exc.item),
+                accommodations: accommodations.map((acc) => ({
+                    type: acc.type || "",
+                    date: acc.date || "",
+                    location: acc.location || "",
+                    description: acc.description || "",
+                })),
                 trekStages: trekStages.map((stage) => ({
                     name: stage.name,
                     description: stage.description,
