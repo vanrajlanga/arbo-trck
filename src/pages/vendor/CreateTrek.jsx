@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, X, ArrowLeft, ArrowRight, Save } from "lucide-react";
 import DynamicItinerary from "@/components/trek/DynamicItinerary";
 import DynamicAccommodation from "@/components/trek/DynamicAccommodation";
+import DynamicActivities from "@/components/trek/DynamicActivities";
 import ImageUpload from "@/components/trek/ImageUpload";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -80,6 +81,7 @@ const CreateTrek = () => {
     });
     const [itinerary, setItinerary] = useState([]);
     const [accommodations, setAccommodations] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [images, setImages] = useState([]);
 
     // Fetch destinations and cities from API on mount
@@ -437,6 +439,9 @@ const CreateTrek = () => {
                     duration: stage.duration || "",
                     means_of_transport: stage.means_of_transport || "",
                 })),
+                activities: activities.map((activity) => ({
+                    name: activity.name,
+                })),
                 itinerary: itinerary.map((item, index) => ({
                     day: index + 1,
                     activities: Array.isArray(item.activities)
@@ -491,6 +496,8 @@ const CreateTrek = () => {
                 return trek.price && trek.difficulty && trek.maxParticipants;
             case "dates":
                 return trek.startDate && trek.endDate;
+            case "activities":
+                return true; // Optional
             case "itinerary":
                 return true; // Optional
             case "inclusions":
@@ -538,6 +545,7 @@ const CreateTrek = () => {
             "trek-stages",
             "pricing",
             "dates",
+            "activities",
             "itinerary",
             "inclusions",
             "meeting-point",
@@ -561,6 +569,7 @@ const CreateTrek = () => {
             "trek-stages",
             "pricing",
             "dates",
+            "activities",
             "itinerary",
             "inclusions",
             "meeting-point",
@@ -582,6 +591,7 @@ const CreateTrek = () => {
             "trek-stages",
             "pricing",
             "dates",
+            "activities",
             "itinerary",
             "inclusions",
             "meeting-point",
@@ -598,7 +608,7 @@ const CreateTrek = () => {
                 <div>
                     <h1 className="text-3xl font-bold">Create New Trek</h1>
                     <p className="text-gray-600">
-                        Step {getCurrentStepNumber()} of 12
+                        Step {getCurrentStepNumber()} of 13
                     </p>
                 </div>
                 <Button
@@ -637,6 +647,9 @@ const CreateTrek = () => {
                             </TabsTrigger>
                             <TabsTrigger value="dates" className="text-xs">
                                 Dates
+                            </TabsTrigger>
+                            <TabsTrigger value="activities" className="text-xs">
+                                Activities
                             </TabsTrigger>
                             <TabsTrigger value="itinerary" className="text-xs">
                                 Itinerary
@@ -1190,7 +1203,19 @@ const CreateTrek = () => {
                                 </div>
                             </TabsContent>
 
-                            {/* Step 7: Itinerary */}
+                            {/* Step 7: Activities */}
+                            <TabsContent
+                                value="activities"
+                                className="space-y-4"
+                            >
+                                <DynamicActivities
+                                    duration={trek.duration || "3D/2N"}
+                                    activities={activities}
+                                    onChange={setActivities}
+                                />
+                            </TabsContent>
+
+                            {/* Step 8: Itinerary */}
                             <TabsContent
                                 value="itinerary"
                                 className="space-y-4"
@@ -1202,7 +1227,7 @@ const CreateTrek = () => {
                                 />
                             </TabsContent>
 
-                            {/* Step 8: Inclusions */}
+                            {/* Step 9: Inclusions */}
                             <TabsContent
                                 value="inclusions"
                                 className="space-y-4"
@@ -1314,7 +1339,7 @@ const CreateTrek = () => {
                                 </div>
                             </TabsContent>
 
-                            {/* Step 9: Meeting Point */}
+                            {/* Step 10: Meeting Point */}
                             <TabsContent
                                 value="meeting-point"
                                 className="space-y-4"
@@ -1521,7 +1546,7 @@ const CreateTrek = () => {
                                 </div>
                             </TabsContent>
 
-                            {/* Step 10: Accommodation */}
+                            {/* Step 11: Accommodation */}
                             <TabsContent
                                 value="accommodation"
                                 className="space-y-4"
@@ -1533,7 +1558,7 @@ const CreateTrek = () => {
                                 />
                             </TabsContent>
 
-                            {/* Step 11: Images */}
+                            {/* Step 12: Images */}
                             <TabsContent value="images" className="space-y-4">
                                 <ImageUpload
                                     images={images}
@@ -1542,7 +1567,7 @@ const CreateTrek = () => {
                                 />
                             </TabsContent>
 
-                            {/* Step 12: Cancellation Policies */}
+                            {/* Step 13: Cancellation Policies */}
                             <TabsContent
                                 value="cancellation"
                                 className="space-y-6"
@@ -1940,7 +1965,7 @@ const CreateTrek = () => {
                                 </Button>
 
                                 <div className="text-sm text-gray-500">
-                                    Step {getCurrentStepNumber()} of 12
+                                    Step {getCurrentStepNumber()} of 13
                                 </div>
 
                                 {currentStep === "cancellation" ? (

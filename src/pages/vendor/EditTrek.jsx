@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, X, MapPin, ArrowLeft, ArrowRight, Save } from "lucide-react";
 import DynamicItinerary from "@/components/trek/DynamicItinerary";
 import DynamicAccommodation from "@/components/trek/DynamicAccommodation";
+import DynamicActivities from "@/components/trek/DynamicActivities";
 import ImageUpload from "@/components/trek/ImageUpload";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,6 +71,7 @@ const EditTrek = () => {
     const [otherPolicies, setOtherPolicies] = useState([]);
     const [itinerary, setItinerary] = useState([]);
     const [accommodations, setAccommodations] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [images, setImages] = useState([]);
     const [cancellationPolicy, setCancellationPolicy] = useState({
         title: "Cancellation Policy",
@@ -313,6 +315,13 @@ const EditTrek = () => {
                         trekData.accommodations
                     );
                     setAccommodations(trekData.accommodations || []);
+
+                    // Map activities
+                    console.log(
+                        "Activities data from backend:",
+                        trekData.activities
+                    );
+                    setActivities(trekData.activities || []);
 
                     // Load policies
                     if (
@@ -806,6 +815,9 @@ const EditTrek = () => {
                     duration: stage.duration || "",
                     means_of_transport: stage.means_of_transport || "",
                 })),
+                activities: activities.map((activity) => ({
+                    name: activity.name,
+                })),
                 itinerary: itinerary.map((item, index) => ({
                     day: index + 1,
                     activities: Array.isArray(item.activities)
@@ -854,6 +866,8 @@ const EditTrek = () => {
                 return trek.price;
             case "dates":
                 return trek.startDate;
+            case "activities":
+                return activities.length > 0;
             case "itinerary":
                 return itinerary.length > 0;
             case "inclusions":
@@ -887,6 +901,7 @@ const EditTrek = () => {
             "trek-stages",
             "pricing",
             "dates",
+            "activities",
             "itinerary",
             "inclusions",
             "meeting-point",
@@ -908,6 +923,7 @@ const EditTrek = () => {
             "trek-stages",
             "pricing",
             "dates",
+            "activities",
             "itinerary",
             "inclusions",
             "meeting-point",
@@ -929,6 +945,7 @@ const EditTrek = () => {
             "trek-stages",
             "pricing",
             "dates",
+            "activities",
             "itinerary",
             "inclusions",
             "meeting-point",
@@ -957,7 +974,7 @@ const EditTrek = () => {
                 <div>
                     <h1 className="text-3xl font-bold">Edit Trek</h1>
                     <p className="text-gray-600">
-                        Step {getCurrentStepNumber()} of 12
+                        Step {getCurrentStepNumber()} of 13
                     </p>
                 </div>
                 <Button
@@ -996,6 +1013,9 @@ const EditTrek = () => {
                             </TabsTrigger>
                             <TabsTrigger value="dates" className="text-xs">
                                 Dates
+                            </TabsTrigger>
+                            <TabsTrigger value="activities" className="text-xs">
+                                Activities
                             </TabsTrigger>
                             <TabsTrigger value="itinerary" className="text-xs">
                                 Itinerary
@@ -1540,6 +1560,17 @@ const EditTrek = () => {
                                         />
                                     </div>
                                 </div>
+                            </TabsContent>
+
+                            {/* Activities Tab */}
+                            <TabsContent
+                                value="activities"
+                                className="space-y-4"
+                            >
+                                <DynamicActivities
+                                    activities={activities}
+                                    onChange={setActivities}
+                                />
                             </TabsContent>
 
                             {/* Itinerary Tab */}
