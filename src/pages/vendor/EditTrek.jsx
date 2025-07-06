@@ -34,7 +34,6 @@ const EditTrek = () => {
     // Trek data state matching CreateTrek structure
     const [trek, setTrek] = useState({
         name: "",
-        destination: "",
         destination_id: "",
         description: "",
         trekType: "",
@@ -97,7 +96,6 @@ const EditTrek = () => {
                     // Map basic trek data
                     setTrek({
                         name: trekData.name || "",
-                        destination: trekData.destination || "",
                         destination_id: trekData.destination_id || "",
                         description: trekData.description || "",
                         trekType: trekData.trekType || "",
@@ -572,7 +570,7 @@ const EditTrek = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.name || !formData.destination || !formData.basePrice) {
+        if (!trek.name || !trek.destination_id || !trek.description) {
             toast.error("Please fill in all required fields");
             return;
         }
@@ -600,7 +598,7 @@ const EditTrek = () => {
     const canProceed = (step) => {
         switch (step) {
             case "basic-info":
-                return trek.name && trek.destination && trek.description;
+                return trek.name && trek.destination_id && trek.description;
             case "trek-type":
                 return trek.trekType && trek.category;
             case "duration":
