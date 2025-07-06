@@ -62,6 +62,22 @@ const CreateTrek = () => {
     });
     const [pickupPoints, setPickupPoints] = useState([]);
     const [policies, setPolicies] = useState([]);
+    const [cancellationPolicies, setCancellationPolicies] = useState([]);
+    const [otherPolicies, setOtherPolicies] = useState([]);
+    const [cancellationPolicy, setCancellationPolicy] = useState({
+        title: "Cancellation Policy",
+        description: "Standard cancellation terms and conditions",
+        rules: [
+            { rule: "Full refund", deduction: "0%" },
+            { rule: "Partial refund", deduction: "50%" },
+            { rule: "No refund", deduction: "100%" },
+        ],
+        descriptionPoints: [
+            "Cancellation must be made in writing",
+            "Refunds processed within 5-7 business days",
+            "Force majeure events may affect cancellation terms",
+        ],
+    });
     const [itinerary, setItinerary] = useState([]);
     const [accommodations, setAccommodations] = useState([]);
     const [images, setImages] = useState([]);
@@ -82,13 +98,21 @@ const CreateTrek = () => {
         }
         fetchData();
         // Initialize with default cancellation policy
-        setPolicies([
-            {
-                id: "default-cancellation",
-                title: "Cancellation Policy",
-                description: "Standard cancellation terms and conditions",
-            },
-        ]);
+        setCancellationPolicy({
+            title: "Cancellation Policy",
+            description: "Standard cancellation terms and conditions",
+            rules: [
+                { rule: "Full refund", deduction: "0%" },
+                { rule: "Partial refund", deduction: "50%" },
+                { rule: "No refund", deduction: "100%" },
+            ],
+            descriptionPoints: [
+                "Cancellation must be made in writing",
+                "Refunds processed within 5-7 business days",
+                "Force majeure events may affect cancellation terms",
+            ],
+        });
+        setOtherPolicies([]);
     }, []);
 
     const handleInputChange = (e) => {
@@ -256,11 +280,29 @@ const CreateTrek = () => {
 
     const addPolicy = () => {
         const newPolicy = {
-            id: `policy-${Date.now()}`,
+            id: Date.now(),
             title: "",
             description: "",
         };
         setPolicies((prev) => [...prev, newPolicy]);
+    };
+
+    const addCancellationPolicy = () => {
+        const newPolicy = {
+            id: Date.now(),
+            title: "",
+            description: "",
+        };
+        setCancellationPolicies((prev) => [...prev, newPolicy]);
+    };
+
+    const addOtherPolicy = () => {
+        const newPolicy = {
+            id: Date.now(),
+            title: "",
+            description: "",
+        };
+        setOtherPolicies((prev) => [...prev, newPolicy]);
     };
 
     const updatePolicy = (index, field, value) => {
@@ -271,8 +313,80 @@ const CreateTrek = () => {
         );
     };
 
+    const updateCancellationPolicy = (index, field, value) => {
+        setCancellationPolicies((prev) =>
+            prev.map((policy, i) =>
+                i === index ? { ...policy, [field]: value } : policy
+            )
+        );
+    };
+
+    const updateOtherPolicy = (index, field, value) => {
+        setOtherPolicies((prev) =>
+            prev.map((policy, i) =>
+                i === index ? { ...policy, [field]: value } : policy
+            )
+        );
+    };
+
     const removePolicy = (index) => {
         setPolicies((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const removeCancellationPolicy = (index) => {
+        setCancellationPolicies((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const removeOtherPolicy = (index) => {
+        setOtherPolicies((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const addCancellationRule = () => {
+        setCancellationPolicy((prev) => ({
+            ...prev,
+            rules: [...prev.rules, { rule: "", deduction: "" }],
+        }));
+    };
+
+    const updateCancellationRule = (index, field, value) => {
+        setCancellationPolicy((prev) => ({
+            ...prev,
+            rules: prev.rules.map((rule, i) =>
+                i === index ? { ...rule, [field]: value } : rule
+            ),
+        }));
+    };
+
+    const removeCancellationRule = (index) => {
+        setCancellationPolicy((prev) => ({
+            ...prev,
+            rules: prev.rules.filter((_, i) => i !== index),
+        }));
+    };
+
+    const addDescriptionPoint = () => {
+        setCancellationPolicy((prev) => ({
+            ...prev,
+            descriptionPoints: [...prev.descriptionPoints, ""],
+        }));
+    };
+
+    const updateDescriptionPoint = (index, value) => {
+        setCancellationPolicy((prev) => ({
+            ...prev,
+            descriptionPoints: prev.descriptionPoints.map((point, i) =>
+                i === index ? value : point
+            ),
+        }));
+    };
+
+    const removeDescriptionPoint = (index) => {
+        setCancellationPolicy((prev) => ({
+            ...prev,
+            descriptionPoints: prev.descriptionPoints.filter(
+                (_, i) => i !== index
+            ),
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -335,6 +449,11 @@ const CreateTrek = () => {
                 discountValue: parseFloat(trek.discountValue) || 0.0,
                 discountType: trek.discountType || "percentage",
                 hasDiscount: trek.hasDiscount || false,
+                cancellationPolicies: [cancellationPolicy],
+                otherPolicies: otherPolicies.map((policy) => ({
+                    title: policy.title,
+                    description: policy.description,
+                })),
             };
 
             console.log("Submitting trek data:", trekData);
@@ -395,9 +514,15 @@ const CreateTrek = () => {
                 return true; // Optional
             case "cancellation":
                 return (
-                    policies.length > 0 &&
-                    policies.every(
-                        (policy) => policy.title && policy.description
+                    cancellationPolicy.title &&
+                    cancellationPolicy.description &&
+                    cancellationPolicy.rules.length > 0 &&
+                    cancellationPolicy.rules.every(
+                        (rule) => rule.rule && rule.deduction
+                    ) &&
+                    cancellationPolicy.descriptionPoints.length > 0 &&
+                    cancellationPolicy.descriptionPoints.every(
+                        (point) => point.trim() !== ""
                     )
                 );
             default:
@@ -1420,78 +1545,386 @@ const CreateTrek = () => {
                             {/* Step 12: Cancellation Policies */}
                             <TabsContent
                                 value="cancellation"
-                                className="space-y-4"
+                                className="space-y-6"
                             >
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-medium">
-                                        Cancellation & Policies
-                                    </h3>
-                                    <Button
-                                        type="button"
-                                        onClick={addPolicy}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Add Policy
-                                    </Button>
-                                </div>
-
-                                {policies.map((policy, index) => (
-                                    <div
-                                        key={policy.id}
-                                        className="border rounded-lg p-4"
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <h4 className="font-medium">
-                                                Policy {index + 1}
-                                            </h4>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    removePolicy(index)
-                                                }
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
+                                {/* Cancellation Policy Section */}
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-medium text-red-600">
+                                                Cancellation Policy *
+                                            </h3>
+                                            <p className="text-sm text-gray-600">
+                                                Define cancellation rules and
+                                                terms
+                                            </p>
                                         </div>
+                                    </div>
+
+                                    <div className="border border-red-200 rounded-lg p-4 bg-red-50">
                                         <div className="space-y-4">
                                             <div>
-                                                <Label>Policy Title *</Label>
+                                                <Label className="text-red-700">
+                                                    Policy Title *
+                                                </Label>
                                                 <Input
-                                                    value={policy.title}
+                                                    value={
+                                                        cancellationPolicy.title
+                                                    }
                                                     onChange={(e) =>
-                                                        updatePolicy(
-                                                            index,
-                                                            "title",
-                                                            e.target.value
+                                                        setCancellationPolicy(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                title: e.target
+                                                                    .value,
+                                                            })
                                                         )
                                                     }
                                                     placeholder="e.g., Cancellation Policy"
+                                                    className="border-red-300"
                                                 />
                                             </div>
                                             <div>
-                                                <Label>
+                                                <Label className="text-red-700">
                                                     Policy Description *
                                                 </Label>
                                                 <Textarea
-                                                    value={policy.description}
+                                                    value={
+                                                        cancellationPolicy.description
+                                                    }
                                                     onChange={(e) =>
-                                                        updatePolicy(
-                                                            index,
-                                                            "description",
-                                                            e.target.value
+                                                        setCancellationPolicy(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                description:
+                                                                    e.target
+                                                                        .value,
+                                                            })
                                                         )
                                                     }
-                                                    placeholder="Describe the policy terms and conditions"
-                                                    rows={4}
+                                                    placeholder="Describe the cancellation policy overview"
+                                                    rows={3}
+                                                    className="border-red-300"
                                                 />
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+
+                                    {/* Cancellation Rules Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <h4 className="text-md font-medium text-red-600">
+                                                    Cancellation Rules *
+                                                </h4>
+                                                <p className="text-sm text-gray-600">
+                                                    Define rules with their
+                                                    corresponding deductions
+                                                </p>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                onClick={addCancellationRule}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add Rule
+                                            </Button>
+                                        </div>
+
+                                        {cancellationPolicy.rules.length ===
+                                        0 ? (
+                                            <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                                                <p>
+                                                    No cancellation rules added
+                                                </p>
+                                                <p className="text-sm">
+                                                    At least one rule is
+                                                    required
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {cancellationPolicy.rules.map(
+                                                    (rule, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="border border-red-200 rounded-lg p-4 bg-white"
+                                                        >
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <h5 className="font-medium text-red-800">
+                                                                    Rule{" "}
+                                                                    {index + 1}
+                                                                </h5>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        removeCancellationRule(
+                                                                            index
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        cancellationPolicy
+                                                                            .rules
+                                                                            .length ===
+                                                                        1
+                                                                    }
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                <div>
+                                                                    <Label className="text-red-700">
+                                                                        Rule *
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={
+                                                                            rule.rule
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateCancellationRule(
+                                                                                index,
+                                                                                "rule",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        placeholder="e.g., Full refund if cancelled 7 days before"
+                                                                        className="border-red-300"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <Label className="text-red-700">
+                                                                        Deduction
+                                                                        *
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={
+                                                                            rule.deduction
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateCancellationRule(
+                                                                                index,
+                                                                                "deduction",
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        placeholder="e.g., 0%, 50%, 100%"
+                                                                        className="border-red-300"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Description Points Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <h4 className="text-md font-medium text-red-600">
+                                                    Description Points *
+                                                </h4>
+                                                <p className="text-sm text-gray-600">
+                                                    Additional important points
+                                                    about the policy
+                                                </p>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                onClick={addDescriptionPoint}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add Point
+                                            </Button>
+                                        </div>
+
+                                        {cancellationPolicy.descriptionPoints
+                                            .length === 0 ? (
+                                            <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                                                <p>
+                                                    No description points added
+                                                </p>
+                                                <p className="text-sm">
+                                                    At least one point is
+                                                    required
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {cancellationPolicy.descriptionPoints.map(
+                                                    (point, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="border border-red-200 rounded-lg p-4 bg-white"
+                                                        >
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <Label className="text-red-700">
+                                                                        Point{" "}
+                                                                        {index +
+                                                                            1}{" "}
+                                                                        *
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={
+                                                                            point
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            updateDescriptionPoint(
+                                                                                index,
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        placeholder="e.g., Cancellation must be made in writing"
+                                                                        className="border-red-300"
+                                                                    />
+                                                                </div>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        removeDescriptionPoint(
+                                                                            index
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        cancellationPolicy
+                                                                            .descriptionPoints
+                                                                            .length ===
+                                                                        1
+                                                                    }
+                                                                    className="ml-3"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Other Policies Section */}
+                                <div className="space-y-4 pt-6 border-t">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-medium text-blue-600">
+                                                Other Policies
+                                            </h3>
+                                            <p className="text-sm text-gray-600">
+                                                Additional policies (optional)
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            onClick={addOtherPolicy}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add Other Policy
+                                        </Button>
+                                    </div>
+
+                                    {otherPolicies.length === 0 ? (
+                                        <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                                            <p>No other policies added</p>
+                                            <p className="text-sm">
+                                                Optional additional policies
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        otherPolicies.map((policy, index) => (
+                                            <div
+                                                key={policy.id}
+                                                className="border border-blue-200 rounded-lg p-4 bg-blue-50"
+                                            >
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <h4 className="font-medium text-blue-800">
+                                                        Other Policy {index + 1}
+                                                    </h4>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            removeOtherPolicy(
+                                                                index
+                                                            )
+                                                        }
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <Label className="text-blue-700">
+                                                            Policy Title
+                                                        </Label>
+                                                        <Input
+                                                            value={policy.title}
+                                                            onChange={(e) =>
+                                                                updateOtherPolicy(
+                                                                    index,
+                                                                    "title",
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                            placeholder="e.g., Refund Policy, Safety Policy"
+                                                            className="border-blue-300"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-blue-700">
+                                                            Policy Description
+                                                        </Label>
+                                                        <Textarea
+                                                            value={
+                                                                policy.description
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateOtherPolicy(
+                                                                    index,
+                                                                    "description",
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                            placeholder="Describe the policy terms and conditions"
+                                                            rows={4}
+                                                            className="border-blue-300"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </TabsContent>
 
                             {/* Navigation */}
