@@ -28,6 +28,7 @@ const EditTrek = () => {
     const { id } = useParams();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [cities, setCities] = useState([]);
     const [destinations, setDestinations] = useState([]);
     const [currentStep, setCurrentStep] = useState("basic-info");
@@ -68,6 +69,66 @@ const EditTrek = () => {
     const [itinerary, setItinerary] = useState([]);
     const [accommodations, setAccommodations] = useState([]);
     const [images, setImages] = useState([]);
+
+    // Helper function to convert 12-hour time to 24-hour format
+    const convertTimeFormat = (time) => {
+        if (!time) return "";
+
+        // If already in 24-hour format (HH:MM), return as is
+        if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
+            return time;
+        }
+
+        // Convert 12-hour format (HH:MM AM/PM) to 24-hour format
+        const timeRegex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+        const match = time.match(timeRegex);
+
+        if (match) {
+            let hours = parseInt(match[1]);
+            const minutes = match[2];
+            const period = match[3].toUpperCase();
+
+            if (period === "PM" && hours !== 12) {
+                hours += 12;
+            } else if (period === "AM" && hours === 12) {
+                hours = 0;
+            }
+
+            return `${hours.toString().padStart(2, "0")}:${minutes}`;
+        }
+
+        return time; // Return original if no conversion possible
+    };
+
+    // Helper function to convert 24-hour time to 12-hour format
+    const convertTo12HourFormat = (time) => {
+        if (!time) return "";
+
+        // If already in 12-hour format, return as is
+        if (/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.test(time)) {
+            return time;
+        }
+
+        // Convert 24-hour format (HH:MM) to 12-hour format
+        const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+        const match = time.match(timeRegex);
+
+        if (match) {
+            let hours = parseInt(match[1]);
+            const minutes = match[2];
+            const period = hours >= 12 ? "PM" : "AM";
+
+            if (hours > 12) {
+                hours -= 12;
+            } else if (hours === 0) {
+                hours = 12;
+            }
+
+            return `${hours}:${minutes} ${period}`;
+        }
+
+        return time; // Return original if no conversion possible
+    };
 
     // Load cities and trek data on component mount
     useEffect(() => {
@@ -119,9 +180,9 @@ const EditTrek = () => {
                         startDate: trekData.startDate || "",
                         endDate: trekData.endDate || "",
                         rating: trekData.rating || 0.0,
-                        discountValue: trekData.discount?.value || 0.0,
-                        discountType: trekData.discount?.type || "percentage",
-                        hasDiscount: trekData.discount?.hasDiscount || false,
+                        discountValue: trekData.discountValue || 0.0,
+                        discountType: trekData.discountType || "percentage",
+                        hasDiscount: trekData.hasDiscount || false,
                     });
 
                     // Map inclusions and exclusions
@@ -175,6 +236,10 @@ const EditTrek = () => {
                     setExclusions(processExclusions(trekData.exclusions));
 
                     // Map meeting point
+                    console.log(
+                        "Setting meeting point with city_id:",
+                        trekData.city_id
+                    );
                     setMeetingPoint({
                         id: "",
                         cityId: trekData.city_id
@@ -182,7 +247,14 @@ const EditTrek = () => {
                             : "",
                         cityName: trekData.city?.cityName || "",
                         locationDetails: trekData.meetingPoint || "",
-                        time: trekData.meetingTime || "",
+                        time: convertTimeFormat(trekData.meetingTime) || "",
+                    });
+                    console.log("Meeting point set to:", {
+                        cityId: trekData.city_id
+                            ? String(trekData.city_id)
+                            : "",
+                        cityName: trekData.city?.cityName || "",
+                        time: convertTimeFormat(trekData.meetingTime) || "",
                     });
 
                     // Map itinerary with proper structure for DynamicItinerary component
@@ -251,6 +323,19 @@ const EditTrek = () => {
         loadTrek();
     }, [id, navigate]);
 
+    // Debug logging for cities and meeting point
+    useEffect(() => {
+        console.log(
+            "Cities loaded:",
+            cities.length,
+            cities.map((c) => ({ id: c.id, name: c.cityName }))
+        );
+    }, [cities]);
+
+    useEffect(() => {
+        console.log("Meeting point changed:", meetingPoint);
+    }, [meetingPoint]);
+
     // Handle input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -296,6 +381,7 @@ const EditTrek = () => {
                 description: "",
                 distance: "",
                 duration: "",
+                means_of_transport: "",
             },
         ]);
     };
@@ -616,6 +702,7 @@ const EditTrek = () => {
                     description: stage.description,
                     distance: stage.distance || "",
                     duration: stage.duration || "",
+                    means_of_transport: stage.means_of_transport || "",
                 })),
                 itinerary: itinerary.map((item, index) => ({
                     day: index + 1,
@@ -1117,6 +1204,25 @@ const EditTrek = () => {
                                                         placeholder="e.g., 3 hours"
                                                     />
                                                 </div>
+                                                <div>
+                                                    <Label>
+                                                        Means of Transport
+                                                    </Label>
+                                                    <Input
+                                                        value={
+                                                            stage.means_of_transport ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) =>
+                                                            updateTrekStage(
+                                                                index,
+                                                                "means_of_transport",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="e.g., Walking, Bus, Train"
+                                                    />
+                                                </div>
                                             </div>
                                             <div className="mt-4">
                                                 <Label>Description *</Label>
@@ -1464,7 +1570,7 @@ const EditTrek = () => {
                                                 {cities.map((city) => (
                                                     <SelectItem
                                                         key={city.id}
-                                                        value={city.id}
+                                                        value={String(city.id)}
                                                     >
                                                         {city.cityName},{" "}
                                                         {city.state?.name ||
@@ -1500,6 +1606,10 @@ const EditTrek = () => {
                                                 )
                                             }
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Debug: {meetingPoint.time} (type:{" "}
+                                            {typeof meetingPoint.time})
+                                        </p>
                                     </div>
                                 </div>
 
@@ -1562,9 +1672,9 @@ const EditTrek = () => {
                                                                         key={
                                                                             city.id
                                                                         }
-                                                                        value={
+                                                                        value={String(
                                                                             city.id
-                                                                        }
+                                                                        )}
                                                                     >
                                                                         {
                                                                             city.cityName
@@ -1713,8 +1823,11 @@ const EditTrek = () => {
                                 </Button>
 
                                 {currentStep === "cancellation" ? (
-                                    <Button type="submit" disabled={saving}>
-                                        {saving ? (
+                                    <Button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                                 Updating...

@@ -138,6 +138,7 @@ const CreateTrek = () => {
             description: "",
             distance: "",
             duration: "",
+            means_of_transport: "",
         };
         setTrekStages((prev) => [...prev, newStage]);
     };
@@ -314,6 +315,7 @@ const CreateTrek = () => {
                     description: stage.description,
                     distance: stage.distance || "",
                     duration: stage.duration || "",
+                    means_of_transport: stage.means_of_transport || "",
                 })),
                 itinerary: itinerary.map((item, index) => ({
                     day: index + 1,
@@ -840,6 +842,24 @@ const CreateTrek = () => {
                                                             )
                                                         }
                                                         placeholder="e.g., 3 hours"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label>
+                                                        Means of Transport
+                                                    </Label>
+                                                    <Input
+                                                        value={
+                                                            stage.means_of_transport
+                                                        }
+                                                        onChange={(e) =>
+                                                            updateTrekStage(
+                                                                index,
+                                                                "means_of_transport",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="e.g., Walking, Bus, Train"
                                                     />
                                                 </div>
                                             </div>
