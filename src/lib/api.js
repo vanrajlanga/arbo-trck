@@ -169,6 +169,29 @@ export const apiAdmin = {
             method: "PUT",
             body: JSON.stringify(customerData),
         }),
+
+    // Coupon endpoints
+    getCoupons: () => apiCall("/api/admin/coupons"),
+    getCouponById: (id) => apiCall(`/api/admin/coupons/${id}`),
+    createCoupon: (couponData) =>
+        apiCall("/api/admin/coupons", {
+            method: "POST",
+            body: JSON.stringify(couponData),
+        }),
+    updateCoupon: (id, couponData) =>
+        apiCall(`/api/admin/coupons/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(couponData),
+        }),
+    deleteCoupon: (id) =>
+        apiCall(`/api/admin/coupons/${id}`, {
+            method: "DELETE",
+        }),
+    toggleCouponStatus: (id) =>
+        apiCall(`/api/admin/coupons/${id}/status`, {
+            method: "PATCH",
+        }),
+    getCouponAnalytics: () => apiCall("/api/admin/coupons/analytics"),
 };
 
 // Vendor API methods (for vendor panel)
@@ -342,6 +365,14 @@ export const apiVendor = {
     getStates: () => {
         return apiCall("/api/vendor/locations/states");
     },
+
+    // Coupon endpoints
+    getCoupons: () => apiCall("/api/vendor/coupons"),
+    validateCoupon: (couponData) =>
+        apiCall("/api/vendor/coupons/validate", {
+            method: "POST",
+            body: JSON.stringify(couponData),
+        }),
 };
 
 // Legacy API methods (for backward compatibility)
@@ -633,6 +664,20 @@ export const apiV1 = {
         apiCall(`/api/v1/customers/${id}`, {
             method: "PUT",
             body: JSON.stringify(customerData),
+        }),
+
+    // Coupon endpoints (public - for mobile app)
+    getPublicCoupons: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/v1/coupons${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getCouponByCode: (code) => apiCall(`/api/v1/coupons/code/${code}`),
+    validatePublicCoupon: (couponData) =>
+        apiCall("/api/v1/coupons/validate", {
+            method: "POST",
+            body: JSON.stringify(couponData),
         }),
 };
 
