@@ -21,6 +21,7 @@ import DynamicItinerary from "@/components/trek/DynamicItinerary";
 import DynamicAccommodation from "@/components/trek/DynamicAccommodation";
 import ImageUpload from "@/components/trek/ImageUpload";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const EditTrek = () => {
     const navigate = useNavigate();
@@ -47,6 +48,10 @@ const EditTrek = () => {
         startDate: "",
         endDate: "",
         cancellationPolicy: "",
+        rating: 0.0,
+        discountValue: 0.0,
+        discountType: "percentage",
+        hasDiscount: false,
     });
     const [trekStages, setTrekStages] = useState([]);
     const [inclusions, setInclusions] = useState([]);
@@ -96,7 +101,9 @@ const EditTrek = () => {
                     // Map basic trek data
                     setTrek({
                         name: trekData.name || "",
-                        destination_id: trekData.destination_id || "",
+                        destination_id: trekData.destination_id
+                            ? String(trekData.destination_id)
+                            : "",
                         description: trekData.description || "",
                         trekType: trekData.trekType || "",
                         category: trekData.category || "",
@@ -111,6 +118,10 @@ const EditTrek = () => {
                                 : trekData.slots) || "",
                         startDate: trekData.startDate || "",
                         endDate: trekData.endDate || "",
+                        rating: trekData.rating || 0.0,
+                        discountValue: trekData.discount?.value || 0.0,
+                        discountType: trekData.discount?.type || "percentage",
+                        hasDiscount: trekData.discount?.hasDiscount || false,
                     });
 
                     // Map inclusions and exclusions
@@ -166,8 +177,10 @@ const EditTrek = () => {
                     // Map meeting point
                     setMeetingPoint({
                         id: "",
-                        cityId: "",
-                        cityName: "",
+                        cityId: trekData.city_id
+                            ? String(trekData.city_id)
+                            : "",
+                        cityName: trekData.city?.cityName || "",
                         locationDetails: trekData.meetingPoint || "",
                         time: trekData.meetingTime || "",
                     });
@@ -345,7 +358,9 @@ const EditTrek = () => {
 
         // Auto-populate city name when city is selected
         if (field === "cityId") {
-            const selectedCity = cities.find((city) => city.id === value);
+            const selectedCity = cities.find(
+                (city) => String(city.id) === String(value)
+            );
             if (selectedCity) {
                 setMeetingPoint((prev) => ({
                     ...prev,
@@ -377,7 +392,7 @@ const EditTrek = () => {
                     // Auto-populate city name when city is selected
                     if (field === "cityId") {
                         const selectedCity = cities.find(
-                            (city) => city.id === value
+                            (city) => String(city.id) === String(value)
                         );
                         if (selectedCity) {
                             updated.cityName = selectedCity.cityName;
@@ -577,6 +592,44 @@ const EditTrek = () => {
 
         try {
             setIsSubmitting(true);
+
+            const formData = {
+                name: trek.name,
+                destination_id: trek.destination_id,
+                description: trek.description,
+                duration: trek.duration,
+                durationDays: parseInt(trek.durationDays) || null,
+                durationNights: parseInt(trek.durationNights) || null,
+                price: parseFloat(trek.price),
+                difficulty: trek.difficulty || "moderate",
+                trekType: trek.trekType || "",
+                category: trek.category || "",
+                maxParticipants: parseInt(trek.maxParticipants) || 20,
+                startDate: trek.startDate,
+                endDate: trek.endDate,
+                meetingPoint: meetingPoint.locationDetails,
+                meetingTime: meetingPoint.time,
+                inclusions: inclusions.map((inc) => inc.item),
+                exclusions: exclusions.map((exc) => exc.item),
+                trekStages: trekStages.map((stage) => ({
+                    name: stage.name,
+                    description: stage.description,
+                    distance: stage.distance || "",
+                    duration: stage.duration || "",
+                })),
+                itinerary: itinerary.map((item, index) => ({
+                    day: index + 1,
+                    activities: Array.isArray(item.activities)
+                        ? item.activities.map((act) => act.activity || act)
+                        : [item.activities || ""],
+                })),
+                images: images.map((img) => img.url || img),
+                status: "active",
+                rating: parseFloat(trek.rating) || 0.0,
+                discountValue: parseFloat(trek.discountValue) || 0.0,
+                discountType: trek.discountType || "percentage",
+                hasDiscount: trek.hasDiscount || false,
+            };
 
             const response = await apiVendor.updateTrek(id, formData);
 
@@ -1147,6 +1200,88 @@ const EditTrek = () => {
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+
+                                {/* Rating and Discount Section */}
+                                <div className="border-t pt-4">
+                                    <h3 className="text-lg font-semibold mb-4">
+                                        Rating & Discount
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <Label htmlFor="rating">
+                                                Rating (0-5)
+                                            </Label>
+                                            <Input
+                                                id="rating"
+                                                name="rating"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max="5"
+                                                value={trek.rating}
+                                                onChange={handleInputChange}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="discountValue">
+                                                Discount Value
+                                            </Label>
+                                            <Input
+                                                id="discountValue"
+                                                name="discountValue"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={trek.discountValue}
+                                                onChange={handleInputChange}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Discount Type</Label>
+                                            <Select
+                                                value={
+                                                    trek.discountType ||
+                                                    "percentage"
+                                                }
+                                                onValueChange={(value) =>
+                                                    handleSelectChange(
+                                                        "discountType",
+                                                        value
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="percentage">
+                                                        Percentage (%)
+                                                    </SelectItem>
+                                                    <SelectItem value="fixed">
+                                                        Fixed Amount
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="hasDiscount"
+                                                checked={trek.hasDiscount}
+                                                onCheckedChange={(checked) =>
+                                                    handleSelectChange(
+                                                        "hasDiscount",
+                                                        checked
+                                                    )
+                                                }
+                                            />
+                                            <Label htmlFor="hasDiscount">
+                                                Has Discount
+                                            </Label>
+                                        </div>
+                                    </div>
                                 </div>
                             </TabsContent>
 

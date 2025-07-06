@@ -19,6 +19,7 @@ import { Plus, X, ArrowLeft, ArrowRight, Save } from "lucide-react";
 import DynamicItinerary from "@/components/trek/DynamicItinerary";
 import DynamicAccommodation from "@/components/trek/DynamicAccommodation";
 import ImageUpload from "@/components/trek/ImageUpload";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const CreateTrek = () => {
     const navigate = useNavigate();
@@ -43,6 +44,10 @@ const CreateTrek = () => {
         endDate: "",
         cancellationPolicy: "",
         city_id: "",
+        rating: 0.0,
+        discountValue: 0.0,
+        discountType: "percentage",
+        hasDiscount: false,
     });
 
     const [trekStages, setTrekStages] = useState([]);
@@ -197,9 +202,11 @@ const CreateTrek = () => {
             [field]: value,
         }));
 
-        // If cityId is being updated, also update cityName
+        // Auto-populate city name when city is selected
         if (field === "cityId") {
-            const selectedCity = cities.find((city) => city.id === value);
+            const selectedCity = cities.find(
+                (city) => String(city.id) === String(value)
+            );
             if (selectedCity) {
                 setMeetingPoint((prev) => ({
                     ...prev,
@@ -225,10 +232,10 @@ const CreateTrek = () => {
                 if (i === index) {
                     const updatedPoint = { ...point, [field]: value };
 
-                    // If cityId is being updated, also update cityName
+                    // Auto-populate city name when city is selected
                     if (field === "cityId") {
                         const selectedCity = cities.find(
-                            (city) => city.id === value
+                            (city) => String(city.id) === String(value)
                         );
                         if (selectedCity) {
                             updatedPoint.cityName = selectedCity.cityName;
@@ -316,6 +323,10 @@ const CreateTrek = () => {
                 })),
                 images: images.map((img) => img.url || img),
                 status: "active",
+                rating: parseFloat(trek.rating) || 0.0,
+                discountValue: parseFloat(trek.discountValue) || 0.0,
+                discountType: trek.discountType || "percentage",
+                hasDiscount: trek.hasDiscount || false,
             };
 
             console.log("Submitting trek data:", trekData);
@@ -911,6 +922,88 @@ const CreateTrek = () => {
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
+                                    </div>
+                                </div>
+
+                                {/* Rating and Discount Section */}
+                                <div className="border-t pt-4">
+                                    <h3 className="text-lg font-semibold mb-4">
+                                        Rating & Discount
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <Label htmlFor="rating">
+                                                Rating (0-5)
+                                            </Label>
+                                            <Input
+                                                id="rating"
+                                                name="rating"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                max="5"
+                                                value={trek.rating}
+                                                onChange={handleInputChange}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="discountValue">
+                                                Discount Value
+                                            </Label>
+                                            <Input
+                                                id="discountValue"
+                                                name="discountValue"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={trek.discountValue}
+                                                onChange={handleInputChange}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Discount Type</Label>
+                                            <Select
+                                                value={
+                                                    trek.discountType ||
+                                                    "percentage"
+                                                }
+                                                onValueChange={(value) =>
+                                                    handleSelectChange(
+                                                        "discountType",
+                                                        value
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="percentage">
+                                                        Percentage (%)
+                                                    </SelectItem>
+                                                    <SelectItem value="fixed">
+                                                        Fixed Amount
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="hasDiscount"
+                                                checked={trek.hasDiscount}
+                                                onCheckedChange={(checked) =>
+                                                    handleSelectChange(
+                                                        "hasDiscount",
+                                                        checked
+                                                    )
+                                                }
+                                            />
+                                            <Label htmlFor="hasDiscount">
+                                                Has Discount
+                                            </Label>
+                                        </div>
                                     </div>
                                 </div>
                             </TabsContent>
