@@ -1332,7 +1332,8 @@ const EditTrek = () => {
                                                         value={city.id}
                                                     >
                                                         {city.cityName},{" "}
-                                                        {city.stateName}
+                                                        {city.state?.name ||
+                                                            "Unknown State"}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -1434,9 +1435,10 @@ const EditTrek = () => {
                                                                             city.cityName
                                                                         }
                                                                         ,{" "}
-                                                                        {
-                                                                            city.stateName
-                                                                        }
+                                                                        {city
+                                                                            .state
+                                                                            ?.name ||
+                                                                            "Unknown State"}
                                                                     </SelectItem>
                                                                 )
                                                             )}

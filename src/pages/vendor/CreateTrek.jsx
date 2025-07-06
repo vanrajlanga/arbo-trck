@@ -1110,9 +1110,9 @@ const CreateTrek = () => {
                                                                         city.cityName
                                                                     }
                                                                     ,{" "}
-                                                                    {
-                                                                        city.stateName
-                                                                    }
+                                                                    {city.state
+                                                                        ?.name ||
+                                                                        "Unknown State"}
                                                                 </SelectItem>
                                                             )
                                                         )}
@@ -1239,9 +1239,10 @@ const CreateTrek = () => {
                                                                                 }
 
                                                                                 ,{" "}
-                                                                                {
-                                                                                    city.stateName
-                                                                                }
+                                                                                {city
+                                                                                    .state
+                                                                                    ?.name ||
+                                                                                    "Unknown State"}
                                                                             </SelectItem>
                                                                         )
                                                                     )}

@@ -125,7 +125,8 @@ export const apiAdmin = {
         }),
 
     // Location endpoints
-    getCities: () => apiCall("/api/admin/locations/cities"),
+    getCities: (params = {}) =>
+        apiCall("/api/admin/locations/cities", { params }),
     getCityById: (id) => apiCall(`/api/admin/locations/cities/${id}`),
     createCity: (cityData) =>
         apiCall("/api/admin/locations/cities", {
@@ -141,6 +142,31 @@ export const apiAdmin = {
         apiCall(`/api/admin/locations/cities/${id}`, {
             method: "DELETE",
         }),
+
+    // State endpoints
+    getStates: (params = {}) => apiCall("/api/admin/states", { params }),
+    getStateById: (id) => apiCall(`/api/admin/states/${id}`),
+    createState: (stateData) =>
+        apiCall("/api/admin/states", {
+            method: "POST",
+            body: JSON.stringify(stateData),
+        }),
+    updateState: (id, stateData) =>
+        apiCall(`/api/admin/states/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(stateData),
+        }),
+    deleteState: (id) =>
+        apiCall(`/api/admin/states/${id}`, {
+            method: "DELETE",
+        }),
+    toggleStatePopularity: (id) =>
+        apiCall(`/api/admin/states/${id}/popularity`, {
+            method: "PATCH",
+        }),
+    getPopularStates: () => apiCall("/api/admin/states/popular"),
+    getStatesByRegion: (region) =>
+        apiCall(`/api/admin/states/region/${region}`),
 
     // Booking endpoints
     getAllBookings: (params = {}) => {
@@ -333,6 +359,18 @@ export const apiVendor = {
             method: "DELETE",
         }),
 
+    // State endpoints
+    getStates: () => apiCall("/api/vendor/states"),
+    getStateById: (id) => apiCall(`/api/vendor/states/${id}`),
+    createState: (stateData) =>
+        apiCall("/api/vendor/states", {
+            method: "POST",
+            body: JSON.stringify(stateData),
+        }),
+    getPopularStates: () => apiCall("/api/vendor/states/popular"),
+    getStatesByRegion: (region) =>
+        apiCall(`/api/vendor/states/region/${region}`),
+
     // Destination endpoints
     getDestinations: (params = {}) => {
         const queryString = new URLSearchParams(params).toString();
@@ -359,12 +397,6 @@ export const apiVendor = {
         apiCall(`/api/vendor/destinations/${id}/toggle-popularity`, {
             method: "PATCH",
         }),
-    getPopularDestinations: () => apiCall("/api/vendor/destinations/popular"),
-
-    // States endpoint
-    getStates: () => {
-        return apiCall("/api/vendor/locations/states");
-    },
 
     // Coupon endpoints
     getCoupons: () => apiCall("/api/vendor/coupons"),
@@ -629,6 +661,12 @@ export const apiV1 = {
         apiCall(`/api/v1/locations/cities/${id}`, {
             method: "DELETE",
         }),
+
+    // State endpoints (public - for mobile app)
+    getStates: () => apiCall("/api/v1/states"),
+    getStateById: (id) => apiCall(`/api/v1/states/${id}`),
+    getPopularStates: () => apiCall("/api/v1/states/popular"),
+    getStatesByRegion: (region) => apiCall(`/api/v1/states/region/${region}`),
 
     // Pickup Points
     createPickupPoint: (pickupPointData) =>

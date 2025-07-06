@@ -67,6 +67,7 @@ import AdminSupportRefunds from "./pages/admin/support/Refunds";
 import AdminSupportRouting from "./pages/admin/support/Routing";
 import AdminLocations from "./pages/admin/Locations";
 import AdminLocationCities from "./pages/admin/locations/Cities";
+import AdminLocationStates from "./pages/admin/locations/States";
 import AdminLocationMapping from "./pages/admin/locations/Mapping";
 import AdminLocationPickup from "./pages/admin/locations/Pickup";
 import AdminLocationWeather from "./pages/admin/locations/Weather";
@@ -383,6 +384,13 @@ function App() {
                                             path: "locations/cities",
                                             element: /*#__PURE__*/ _jsx(
                                                 AdminLocationCities,
+                                                {}
+                                            ),
+                                        }),
+                                        /*#__PURE__*/ _jsx(Route, {
+                                            path: "locations/states",
+                                            element: /*#__PURE__*/ _jsx(
+                                                AdminLocationStates,
                                                 {}
                                             ),
                                         }),

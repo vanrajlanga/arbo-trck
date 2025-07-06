@@ -38,13 +38,12 @@ import { apiVendor } from "@/lib/api";
 
 const ManageLocations = () => {
     const [cities, setCities] = useState([]);
+    const [states, setStates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedRegion, setSelectedRegion] = useState("all");
     const [selectedState, setSelectedState] = useState("");
     const [newCity, setNewCity] = useState("");
     const [newState, setNewState] = useState("");
-    const [newRegion, setNewRegion] = useState("North");
     const [isPopular, setIsPopular] = useState(false);
     const [isAddingCity, setIsAddingCity] = useState(false);
     const [isAddingState, setIsAddingState] = useState(false);
@@ -52,112 +51,73 @@ const ManageLocations = () => {
     const [isAddingStateLoading, setIsAddingStateLoading] = useState(false);
     const [isDeletingCity, setIsDeletingCity] = useState(null);
     const [expandedStates, setExpandedStates] = useState(new Set());
-    const [editingCity, setEditingCity] = useState(null);
-
-    const regions = ["North", "South", "East", "West", "Central", "North-East"];
 
     // Group cities by state for display
-    const states = cities.reduce((acc, city) => {
-        const stateName = city.stateName;
+    const statesWithCities = states.map((state) => ({
+        ...state,
+        cities: cities.filter((city) => city.stateId === state.id),
+    }));
 
-        if (!acc[stateName]) {
-            acc[stateName] = {
-                name: stateName,
-                region: city.region,
-                cities: [],
-            };
-        }
-
-        // Only add real cities (not hidden state entries) to the display
-        if (
-            !city.cityName.startsWith("_") ||
-            !city.cityName.endsWith("_STATE_ENTRY_")
-        ) {
-            acc[stateName].cities.push({
-                id: city.id,
-                name: city.cityName,
-                state: city.stateName,
-                status: city.status,
-                region: city.region,
-                isPopular: city.isPopular,
-            });
-        }
-
-        return acc;
-    }, {});
-
-    const statesArray = Object.values(states);
-
-    // Filter states based on search and region
-    const filteredStates = statesArray.filter((state) => {
+    // Filter states based on search
+    const filteredStates = statesWithCities.filter((state) => {
         const matchesSearch =
             searchTerm === "" ||
             state.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             state.cities.some((city) =>
-                city.name.toLowerCase().includes(searchTerm.toLowerCase())
+                city.cityName.toLowerCase().includes(searchTerm.toLowerCase())
             );
-
-        const matchesRegion =
-            selectedRegion === "all" || state.region === selectedRegion;
-
-        return matchesSearch && matchesRegion;
+        return matchesSearch;
     });
 
-    // Get unique states from existing cities (including hidden state entries)
-    const getExistingStates = () => {
-        return [...new Set(cities.map((city) => city.stateName))];
-    };
-
-    // Get unique regions from existing cities
-    const getExistingRegions = () => {
-        return [...new Set(cities.map((city) => city.region))];
-    };
-
-    // Fetch cities from API
-    const fetchCities = async () => {
+    // Fetch cities and states from API
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await apiVendor.getCities();
+            const [citiesResponse, statesResponse] = await Promise.all([
+                apiVendor.getCities(),
+                apiVendor.getStates(),
+            ]);
 
-            if (response.success) {
-                setCities(response.data.cities || []);
-            } else {
-                toast.error("Failed to fetch cities");
+            if (citiesResponse.success) {
+                setCities(citiesResponse.data || []);
+            }
+            if (statesResponse.success) {
+                setStates(statesResponse.data || []);
             }
         } catch (error) {
-            console.error("Error fetching cities:", error);
-            toast.error("Failed to fetch cities");
+            console.error("Error fetching data:", error);
+            toast.error("Failed to fetch locations");
         } finally {
             setLoading(false);
         }
     };
 
-    // Load cities on component mount
+    // Load data on component mount
     useEffect(() => {
-        fetchCities();
+        fetchData();
     }, []);
 
-    const toggleStateExpansion = (stateName) => {
+    const toggleStateExpansion = (stateId) => {
         setExpandedStates((prev) => {
             const newSet = new Set(prev);
-            if (newSet.has(stateName)) {
-                newSet.delete(stateName);
+            if (newSet.has(stateId)) {
+                newSet.delete(stateId);
             } else {
-                newSet.add(stateName);
+                newSet.add(stateId);
             }
             return newSet;
         });
     };
 
     const addNewState = async () => {
-        if (!newState || !newRegion) {
-            toast.error("Please enter both state name and select a region");
+        if (!newState) {
+            toast.error("Please enter state name");
             return;
         }
 
         // Check if state already exists
-        const existingState = getExistingStates().find(
-            (state) => state.toLowerCase() === newState.toLowerCase()
+        const existingState = states.find(
+            (state) => state.name.toLowerCase() === newState.toLowerCase()
         );
 
         if (existingState) {
@@ -168,27 +128,16 @@ const ManageLocations = () => {
         try {
             setIsAddingStateLoading(true);
 
-            // Add a minimal city entry just to establish the state in the system
-            // This will be hidden from the user and only used to track the state
-            const cityData = {
-                cityName: `_${newState}_STATE_ENTRY_`, // Hidden entry
-                stateName: newState,
-                region: newRegion,
-                status: "planning",
-                isPopular: false,
-            };
-
-            const response = await apiVendor.createCity(cityData);
+            const response = await apiVendor.createState({
+                name: newState,
+                status: "active",
+            });
 
             if (response.success) {
-                toast.success(
-                    `Added ${newState} state. Now you can add cities to it.`
-                );
+                toast.success(`Added ${newState} state`);
                 setNewState("");
-                setNewRegion("North");
                 setIsAddingState(false);
-                // Refresh the cities list
-                await fetchCities();
+                await fetchData();
             } else {
                 toast.error(response.message || "Failed to add state");
             }
@@ -210,38 +159,32 @@ const ManageLocations = () => {
         const existingCity = cities.find(
             (city) =>
                 city.cityName.toLowerCase() === newCity.toLowerCase() &&
-                city.stateName === selectedState
+                city.stateId === parseInt(selectedState)
         );
 
         if (existingCity) {
-            toast.error(`${newCity} already exists in ${selectedState}`);
+            toast.error(`${newCity} already exists in this state`);
             return;
         }
 
         try {
             setIsAddingCityLoading(true);
 
-            const stateData = cities.find(
-                (city) => city.stateName === selectedState
-            );
             const cityData = {
                 cityName: newCity,
-                stateName: selectedState,
-                region: stateData?.region || "North",
-                status: "active",
+                stateId: parseInt(selectedState),
                 isPopular: isPopular,
             };
 
             const response = await apiVendor.createCity(cityData);
 
             if (response.success) {
-                toast.success(`Added ${newCity} to ${selectedState}`);
+                toast.success(`Added ${newCity}`);
                 setNewCity("");
                 setSelectedState("");
                 setIsPopular(false);
                 setIsAddingCity(false);
-                // Refresh the cities list
-                await fetchCities();
+                await fetchData();
             } else {
                 toast.error(response.message || "Failed to add city");
             }
@@ -261,8 +204,7 @@ const ManageLocations = () => {
 
             if (response.success) {
                 toast.success(`City popularity updated`);
-                // Refresh the cities list
-                await fetchCities();
+                await fetchData();
             } else {
                 toast.error(
                     response.message || "Failed to update city popularity"
@@ -282,8 +224,7 @@ const ManageLocations = () => {
 
             if (response.success) {
                 toast.success("City removed successfully");
-                // Refresh the cities list
-                await fetchCities();
+                await fetchData();
             } else {
                 toast.error(response.message || "Failed to remove city");
             }
@@ -292,28 +233,6 @@ const ManageLocations = () => {
             toast.error("Failed to remove city");
         } finally {
             setIsDeletingCity(null);
-        }
-    };
-
-    const toggleCityStatus = async (cityId, currentStatus) => {
-        try {
-            const newStatus =
-                currentStatus === "active" ? "inactive" : "active";
-
-            const response = await apiVendor.updateCity(cityId, {
-                status: newStatus,
-            });
-
-            if (response.success) {
-                toast.success(`City status updated to ${newStatus}`);
-                // Refresh the cities list
-                await fetchCities();
-            } else {
-                toast.error(response.message || "Failed to update city status");
-            }
-        } catch (error) {
-            console.error("Error updating city status:", error);
-            toast.error("Failed to update city status");
         }
     };
 
@@ -370,27 +289,6 @@ const ManageLocations = () => {
                                         }
                                     />
                                 </div>
-                                <div>
-                                    <Label htmlFor="region">Region</Label>
-                                    <Select
-                                        value={newRegion}
-                                        onValueChange={setNewRegion}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a region" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {regions.map((region) => (
-                                                <SelectItem
-                                                    key={region}
-                                                    value={region}
-                                                >
-                                                    {region}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
                                 <Button
                                     onClick={addNewState}
                                     className="w-full"
@@ -436,16 +334,14 @@ const ManageLocations = () => {
                                             <SelectValue placeholder="Select a state" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {getExistingStates().map(
-                                                (state) => (
-                                                    <SelectItem
-                                                        key={state}
-                                                        value={state}
-                                                    >
-                                                        {state}
-                                                    </SelectItem>
-                                                )
-                                            )}
+                                            {states.map((state) => (
+                                                <SelectItem
+                                                    key={state.id}
+                                                    value={state.id.toString()}
+                                                >
+                                                    {state.name}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -498,7 +394,7 @@ const ManageLocations = () => {
                 </div>
             </div>
 
-            {/* Search and Filter Section */}
+            {/* Search Section */}
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -515,33 +411,12 @@ const ManageLocations = () => {
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-2">
-                            <Select
-                                value={selectedRegion}
-                                onValueChange={setSelectedRegion}
-                            >
-                                <SelectTrigger className="w-48">
-                                    <Filter className="h-4 w-4 mr-2" />
-                                    <SelectValue placeholder="Filter by region" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        All Regions
-                                    </SelectItem>
-                                    {getExistingRegions().map((region) => (
-                                        <SelectItem key={region} value={region}>
-                                            {region}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
@@ -550,7 +425,7 @@ const ManageLocations = () => {
                                     Total States
                                 </p>
                                 <p className="text-2xl font-bold">
-                                    {statesArray.length}
+                                    {states.length}
                                 </p>
                             </div>
                             <Globe className="h-8 w-8 text-blue-600" />
@@ -590,27 +465,6 @@ const ManageLocations = () => {
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">
-                                    Active Cities
-                                </p>
-                                <p className="text-2xl font-bold">
-                                    {
-                                        cities.filter(
-                                            (city) => city.status === "active"
-                                        ).length
-                                    }
-                                </p>
-                            </div>
-                            <Badge variant="default" className="h-8 px-3">
-                                Active
-                            </Badge>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Cities List */}
@@ -627,16 +481,16 @@ const ManageLocations = () => {
                             <div className="text-center py-12">
                                 <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                    {searchTerm || selectedRegion !== "all"
+                                    {searchTerm
                                         ? "No cities found matching your criteria"
                                         : "No cities found"}
                                 </h3>
                                 <p className="text-gray-500 mb-4">
-                                    {searchTerm || selectedRegion !== "all"
-                                        ? "Try adjusting your search or filter criteria"
+                                    {searchTerm
+                                        ? "Try adjusting your search criteria"
                                         : "Add your first state and city to get started"}
                                 </p>
-                                {!searchTerm && selectedRegion === "all" && (
+                                {!searchTerm && (
                                     <div className="flex gap-2 justify-center">
                                         <Button
                                             onClick={() =>
@@ -661,7 +515,7 @@ const ManageLocations = () => {
                         ) : (
                             filteredStates.map((state) => (
                                 <div
-                                    key={state.name}
+                                    key={state.id}
                                     className="border rounded-lg p-4 hover:shadow-md transition-shadow"
                                 >
                                     <div className="flex items-center justify-between mb-3">
@@ -671,12 +525,12 @@ const ManageLocations = () => {
                                                 size="sm"
                                                 onClick={() =>
                                                     toggleStateExpansion(
-                                                        state.name
+                                                        state.id
                                                     )
                                                 }
                                             >
                                                 {expandedStates.has(
-                                                    state.name
+                                                    state.id
                                                 ) ? (
                                                     <ChevronDown className="w-4 h-4" />
                                                 ) : (
@@ -687,10 +541,14 @@ const ManageLocations = () => {
                                                 <h3 className="text-lg font-semibold flex items-center gap-2">
                                                     {state.name}
                                                     <Badge
-                                                        variant="outline"
-                                                        className="text-xs"
+                                                        variant={
+                                                            state.status ===
+                                                            "active"
+                                                                ? "default"
+                                                                : "secondary"
+                                                        }
                                                     >
-                                                        {state.region}
+                                                        {state.status}
                                                     </Badge>
                                                 </h3>
                                                 <p className="text-sm text-gray-600">
@@ -699,16 +557,6 @@ const ManageLocations = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="secondary">
-                                                {
-                                                    state.cities.filter(
-                                                        (city) =>
-                                                            city.status ===
-                                                            "active"
-                                                    ).length
-                                                }{" "}
-                                                active
-                                            </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="text-yellow-600 border-yellow-600"
@@ -722,7 +570,7 @@ const ManageLocations = () => {
                                             </Badge>
                                         </div>
                                     </div>
-                                    {expandedStates.has(state.name) && (
+                                    {expandedStates.has(state.id) && (
                                         <div className="ml-8">
                                             {state.cities.length === 0 ? (
                                                 <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
@@ -735,7 +583,7 @@ const ManageLocations = () => {
                                                         size="sm"
                                                         onClick={() => {
                                                             setSelectedState(
-                                                                state.name
+                                                                state.id.toString()
                                                             );
                                                             setIsAddingCity(
                                                                 true
@@ -759,32 +607,13 @@ const ManageLocations = () => {
                                                                     <div className="flex flex-col">
                                                                         <span className="font-medium text-gray-900 flex items-center gap-1">
                                                                             {
-                                                                                city.name
+                                                                                city.cityName
                                                                             }
                                                                             {city.isPopular && (
                                                                                 <Star className="w-3 h-3 text-yellow-500" />
                                                                             )}
                                                                         </span>
                                                                         <div className="flex items-center gap-2 mt-1">
-                                                                            <Badge
-                                                                                variant={
-                                                                                    city.status ===
-                                                                                    "active"
-                                                                                        ? "default"
-                                                                                        : "secondary"
-                                                                                }
-                                                                                className="cursor-pointer hover:opacity-80 text-xs"
-                                                                                onClick={() =>
-                                                                                    toggleCityStatus(
-                                                                                        city.id,
-                                                                                        city.status
-                                                                                    )
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    city.status
-                                                                                }
-                                                                            </Badge>
                                                                             <Checkbox
                                                                                 checked={
                                                                                     city.isPopular
@@ -835,7 +664,7 @@ const ManageLocations = () => {
                                                             size="sm"
                                                             onClick={() => {
                                                                 setSelectedState(
-                                                                    state.name
+                                                                    state.id.toString()
                                                                 );
                                                                 setIsAddingCity(
                                                                     true
