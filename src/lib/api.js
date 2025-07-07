@@ -604,7 +604,12 @@ export const apiV1 = {
         const queryString = new URLSearchParams(params).toString();
         return apiCall(`/api/v1/treks${queryString ? `?${queryString}` : ""}`);
     },
-    getPublicTrekById: (id) => apiCall(`/api/v1/treks/${id}`),
+    getPublicTrekById: (id, params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/v1/treks/${id}${queryString ? `?${queryString}` : ""}`
+        );
+    },
     getTreksByCategory: (categoryId, params = {}) => {
         const queryString = new URLSearchParams(params).toString();
         return apiCall(
