@@ -46,12 +46,20 @@ const EditTrek = () => {
         durationDays: "",
         durationNights: "",
         price: "",
-        difficulty: "",
+        difficulty: "moderate",
         cancellationPolicy: "",
-        rating: 0.0,
         discountValue: 0.0,
         discountType: "percentage",
         hasDiscount: false,
+        inclusions: [],
+        exclusions: [],
+        meetingPoint: "",
+        meetingTime: "",
+        itinerary: [],
+        accommodations: [],
+        trekStages: [],
+        images: [],
+        batches: [],
     });
     const [trekStages, setTrekStages] = useState([]);
     const [inclusions, setInclusions] = useState([]);
@@ -193,10 +201,18 @@ const EditTrek = () => {
                         price: trekData.price || "",
                         difficulty: trekData.difficulty || "moderate",
                         cancellationPolicy: trekData.cancellationPolicy || "",
-                        rating: trekData.rating || 0.0,
                         discountValue: trekData.discountValue || 0.0,
                         discountType: trekData.discountType || "percentage",
                         hasDiscount: trekData.hasDiscount || false,
+                        inclusions: trekData.inclusions || [],
+                        exclusions: trekData.exclusions || [],
+                        meetingPoint: trekData.meetingPoint || "",
+                        meetingTime: trekData.meetingTime || "",
+                        itinerary: trekData.itinerary || [],
+                        accommodations: trekData.accommodations || [],
+                        trekStages: trekData.trekStages || [],
+                        images: trekData.images || [],
+                        batches: trekData.batches || [],
                     });
 
                     // Map inclusions and exclusions
@@ -795,49 +811,26 @@ const EditTrek = () => {
                 name: trek.name,
                 destination_id: trek.destination_id,
                 description: trek.description,
+                trekType: trek.trekType,
+                category: trek.category,
                 duration: trek.duration,
-                durationDays: parseInt(trek.durationDays) || null,
-                durationNights: parseInt(trek.durationNights) || null,
-                price: parseFloat(trek.price),
-                difficulty: trek.difficulty || "moderate",
-                trekType: trek.trekType || "",
-                category: trek.category || "",
-                meetingPoint: meetingPoint.locationDetails,
-                meetingTime: meetingPoint.time,
-                inclusions: inclusions.map((inc) => inc.item),
-                exclusions: exclusions.map((exc) => exc.item),
-                accommodations: accommodations.map((acc) => ({
-                    type: acc.type || "",
-                    date: acc.date || "",
-                    location: acc.location || "",
-                    description: acc.description || "",
-                })),
-                trekStages: trekStages.map((stage) => ({
-                    stage_name: stage.stage_name || stage.name || "",
-                    means_of_transport: stage.means_of_transport || "",
-                    date_time: stage.date_time || "",
-                })),
-                activities: activities.map((activity) => ({
-                    name: activity.name,
-                })),
-                itinerary: itinerary.map((item, index) => ({
-                    day: index + 1,
-                    activities: Array.isArray(item.activities)
-                        ? item.activities.map((act) => act.activity || act)
-                        : [item.activities || ""],
-                })),
-                images: images.map((img) => img.url || img),
-                status: "active",
-                rating: parseFloat(trek.rating) || 0.0,
-                discountValue: parseFloat(trek.discountValue) || 0.0,
-                discountType: trek.discountType || "percentage",
-                hasDiscount: trek.hasDiscount || false,
-                cancellationPolicies: [cancellationPolicy],
-                otherPolicies: otherPolicies.map((policy) => ({
-                    title: policy.title,
-                    description: policy.description,
-                })),
-                batches: batches.filter((b) => b.startDate), // Only send valid dates
+                durationDays: trek.durationDays,
+                durationNights: trek.durationNights,
+                price: trek.price,
+                difficulty: trek.difficulty,
+                cancellationPolicy: trek.cancellationPolicy,
+                discountValue: trek.discountValue,
+                discountType: trek.discountType,
+                hasDiscount: trek.hasDiscount,
+                inclusions: trek.inclusions,
+                exclusions: trek.exclusions,
+                meetingPoint: trek.meetingPoint,
+                meetingTime: trek.meetingTime,
+                itinerary: trek.itinerary,
+                accommodations: trek.accommodations,
+                trekStages: trek.trekStages,
+                images: trek.images,
+                batches: trek.batches,
             };
 
             const response = await apiVendor.updateTrek(id, formData);
@@ -876,7 +869,7 @@ const EditTrek = () => {
             case "inclusions":
                 return inclusions.length > 0;
             case "meeting-point":
-                return meetingPoint.locationDetails;
+                return trek.meetingPoint;
             case "cancellation":
                 return (
                     cancellationPolicy.title &&
@@ -1425,28 +1418,12 @@ const EditTrek = () => {
                                     </Select>
                                 </div>
 
-                                {/* Rating and Discount Section */}
+                                {/* Discount Section */}
                                 <div className="border-t pt-4">
                                     <h3 className="text-lg font-semibold mb-4">
-                                        Rating & Discount
+                                        Discount
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                        <div>
-                                            <Label htmlFor="rating">
-                                                Rating (0-5)
-                                            </Label>
-                                            <Input
-                                                id="rating"
-                                                name="rating"
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                max="5"
-                                                value={trek.rating}
-                                                onChange={handleInputChange}
-                                                placeholder="0.00"
-                                            />
-                                        </div>
                                         <div>
                                             <Label htmlFor="discountValue">
                                                 Discount Value
