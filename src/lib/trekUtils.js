@@ -29,8 +29,12 @@ export const formatTrekDataForAPI = ({
     cancellationPolicy = null,
     otherPolicies = [],
     images = [],
+    meetingPoint = null,
 }) => {
     // Prepare inclusions and exclusions as arrays of strings
+    console.log("formatTrekDataForAPI - raw inclusions:", inclusions);
+    console.log("formatTrekDataForAPI - raw exclusions:", exclusions);
+
     const inclusionsArray = inclusions
         .map((inc) => inc.item || inc)
         .filter((item) => item && item.trim() !== "");
@@ -39,21 +43,43 @@ export const formatTrekDataForAPI = ({
         .map((exc) => exc.item || exc)
         .filter((item) => item && item.trim() !== "");
 
+    console.log(
+        "formatTrekDataForAPI - processed inclusions:",
+        inclusionsArray
+    );
+    console.log(
+        "formatTrekDataForAPI - processed exclusions:",
+        exclusionsArray
+    );
+
     // Prepare cancellation policies
     const cancellationPoliciesArray = cancellationPolicy
         ? [cancellationPolicy]
         : [];
 
     // Prepare activities from the activities state
-    const activitiesArray = activities.map((activity) => ({
-        day: activity.day,
-        activities: activity.activities || [],
-    }));
+    // Activities are simple objects with 'name' property from DynamicActivities component
+    console.log("formatTrekDataForAPI - raw activities:", activities);
+    const activitiesArray = activities
+        .map((activity) => activity.name)
+        .filter((name) => name && name.trim() !== "");
+    console.log(
+        "formatTrekDataForAPI - processed activities:",
+        activitiesArray
+    );
+
+    // Debug logging for city_id mapping
+    console.log("formatTrekDataForAPI - meetingPoint:", meetingPoint);
+    console.log("formatTrekDataForAPI - trekData.city_id:", trekData.city_id);
+    const finalCityId = meetingPoint?.cityId
+        ? parseInt(meetingPoint.cityId)
+        : trekData.city_id || null;
+    console.log("formatTrekDataForAPI - final city_id:", finalCityId);
 
     return {
         name: trekData.name || "",
         destination_id: trekData.destination_id || null,
-        city_id: trekData.city_id || null,
+        city_id: finalCityId,
         description: trekData.description || "",
         trekType: trekData.trekType || "",
         category: trekData.category || "",
@@ -68,8 +94,9 @@ export const formatTrekDataForAPI = ({
         hasDiscount: trekData.hasDiscount || false,
         inclusions: inclusionsArray,
         exclusions: exclusionsArray,
-        meetingPoint: trekData.meetingPoint || "",
-        meetingTime: trekData.meetingTime || "",
+        meetingPoint:
+            meetingPoint?.locationDetails || trekData.meetingPoint || "",
+        meetingTime: meetingPoint?.time || trekData.meetingTime || "",
         itinerary: itinerary,
         accommodations: accommodations,
         trekStages: trekStages,
@@ -185,4 +212,34 @@ export const processCancellationPolicy = (cancellationPolicies) => {
     }
 
     return cancellationPolicies[0];
+};
+
+/**
+ * Process activities from API data
+ * @param {Array} activities - Activities from API
+ * @returns {Array} Processed activities for form
+ */
+export const processActivities = (activities) => {
+    if (!Array.isArray(activities)) return [];
+
+    // Handle different possible formats
+    return activities
+        .map((activity, index) => {
+            if (typeof activity === "string") {
+                return {
+                    id: `activity-${index}`,
+                    name: activity,
+                };
+            } else if (activity && typeof activity === "object") {
+                return {
+                    id: `activity-${index}`,
+                    name: activity.name || activity.activity || "",
+                };
+            }
+            return {
+                id: `activity-${index}`,
+                name: "",
+            };
+        })
+        .filter((activity) => activity.name && activity.name.trim() !== "");
 };

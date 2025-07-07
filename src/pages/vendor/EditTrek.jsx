@@ -9,6 +9,7 @@ import {
     processExclusions,
     processBatches,
     processCancellationPolicy,
+    processActivities,
 } from "@/lib/trekUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -268,12 +269,12 @@ const EditTrek = () => {
                     );
                     setAccommodations(trekData.accommodations || []);
 
-                    // Map activities
+                    // Map activities using utility function
                     console.log(
                         "Activities data from backend:",
                         trekData.activities
                     );
-                    setActivities(trekData.activities || []);
+                    setActivities(processActivities(trekData.activities));
 
                     // Load policies using utility function
                     setCancellationPolicy(
@@ -729,6 +730,7 @@ const EditTrek = () => {
                 cancellationPolicy,
                 otherPolicies,
                 images,
+                meetingPoint,
             });
 
             console.log("Submitting trek data:", formData);

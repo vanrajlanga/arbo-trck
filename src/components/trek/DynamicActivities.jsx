@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Edit, Trash2, X, Check } from "lucide-react";
 
 const DynamicActivities = ({ activities = [], onChange }) => {
+    console.log("DynamicActivities - received activities:", activities);
+    console.log("DynamicActivities - onChange function:", onChange);
     const [editingIndex, setEditingIndex] = useState(null);
     const [newActivity, setNewActivity] = useState({
         name: "",
@@ -13,6 +15,11 @@ const DynamicActivities = ({ activities = [], onChange }) => {
     const handleAddActivity = () => {
         if (newActivity.name.trim()) {
             const updatedActivities = [...activities, { ...newActivity }];
+            console.log("DynamicActivities - adding activity:", newActivity);
+            console.log(
+                "DynamicActivities - updated activities:",
+                updatedActivities
+            );
             onChange(updatedActivities);
             setNewActivity({ name: "" });
         }

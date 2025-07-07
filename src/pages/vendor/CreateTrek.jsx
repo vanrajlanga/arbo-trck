@@ -419,6 +419,10 @@ const CreateTrek = () => {
             setLoading(true);
 
             // Use the utility function to format data for API
+            console.log(
+                "CreateTrek - activities state before API call:",
+                activities
+            );
             const formData = formatTrekDataForAPI({
                 trekData: trek,
                 inclusions,
@@ -431,6 +435,7 @@ const CreateTrek = () => {
                 cancellationPolicy,
                 otherPolicies,
                 images,
+                meetingPoint,
             });
 
             console.log("Submitting trek data:", formData);
