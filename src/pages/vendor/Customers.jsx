@@ -257,9 +257,13 @@ const VendorCustomers = () => {
     // Filter customers based on search term and status (client-side backup)
     const filteredCustomers = customers.filter((customer) => {
         const matchesSearch =
-            customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.phone.includes(searchTerm);
+            (customer.name?.toLowerCase() || "").includes(
+                searchTerm.toLowerCase()
+            ) ||
+            (customer.email?.toLowerCase() || "").includes(
+                searchTerm.toLowerCase()
+            ) ||
+            (customer.phone || "").includes(searchTerm);
         const matchesStatus =
             statusFilter === "all" ||
             (statusFilter === "active" && customer.status === "Active") ||
@@ -473,11 +477,12 @@ const VendorCustomers = () => {
                                             <TableCell>
                                                 <div>
                                                     <div className="font-medium">
-                                                        {customer.name}
+                                                        {customer.name || "N/A"}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
                                                         Joined{" "}
-                                                        {customer.joinedDate}
+                                                        {customer.joinedDate ||
+                                                            "N/A"}
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -485,34 +490,39 @@ const VendorCustomers = () => {
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2 text-sm">
                                                         <Mail className="h-3 w-3" />
-                                                        {customer.email}
+                                                        {customer.email ||
+                                                            "N/A"}
                                                     </div>
                                                     <div className="flex items-center gap-2 text-sm">
                                                         <Phone className="h-3 w-3" />
-                                                        {customer.phone}
+                                                        {customer.phone ||
+                                                            "N/A"}
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-gray-500" />
-                                                    {customer.location}
+                                                    {customer.location || "N/A"}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary">
-                                                    {customer.tripsBooked} trips
+                                                    {customer.tripsBooked || 0}{" "}
+                                                    trips
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Clock className="h-4 w-4 text-gray-500" />
-                                                    {customer.lastBooking}
+                                                    {customer.lastBooking ||
+                                                        "N/A"}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-medium">
-                                                    {customer.totalSpent}
+                                                    {customer.totalSpent ||
+                                                        "₹0"}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -530,7 +540,8 @@ const VendorCustomers = () => {
                                                             : "bg-gray-100 text-gray-800"
                                                     }
                                                 >
-                                                    {customer.status}
+                                                    {customer.status ||
+                                                        "Unknown"}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -707,25 +718,25 @@ const CustomerDetailsDialog = ({ customer, isOpen, onOpenChange }) => {
                             <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="font-medium">Name:</span>
-                                    <span>{customer.name}</span>
+                                    <span>{customer.name || "N/A"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-medium">Email:</span>
-                                    <span>{customer.email}</span>
+                                    <span>{customer.email || "N/A"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-medium">Phone:</span>
-                                    <span>{customer.phone}</span>
+                                    <span>{customer.phone || "N/A"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-medium">
                                         Location:
                                     </span>
-                                    <span>{customer.location}</span>
+                                    <span>{customer.location || "N/A"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-medium">Joined:</span>
-                                    <span>{customer.joinedDate}</span>
+                                    <span>{customer.joinedDate || "N/A"}</span>
                                 </div>
                             </div>
                         </div>
@@ -739,21 +750,21 @@ const CustomerDetailsDialog = ({ customer, isOpen, onOpenChange }) => {
                                         Total Trips:
                                     </span>
                                     <Badge variant="secondary">
-                                        {customer.tripsBooked}
+                                        {customer.tripsBooked || 0}
                                     </Badge>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-medium">
                                         Last Booking:
                                     </span>
-                                    <span>{customer.lastBooking}</span>
+                                    <span>{customer.lastBooking || "N/A"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-medium">
                                         Total Spent:
                                     </span>
                                     <span className="font-semibold text-green-600">
-                                        {customer.totalSpent}
+                                        {customer.totalSpent || "₹0"}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -770,7 +781,7 @@ const CustomerDetailsDialog = ({ customer, isOpen, onOpenChange }) => {
                                                 : "bg-gray-100 text-gray-800"
                                         }
                                     >
-                                        {customer.status}
+                                        {customer.status || "Unknown"}
                                     </Badge>
                                 </div>
                             </div>
@@ -793,8 +804,8 @@ const CustomerDetailsDialog = ({ customer, isOpen, onOpenChange }) => {
 // Customer Edit Dialog Component
 const CustomerEditDialog = ({ customer, isOpen, onOpenChange, onUpdate }) => {
     const [editData, setEditData] = useState({
-        name: customer.name,
-        phone: customer.phone,
+        name: customer.name || "",
+        phone: customer.phone || "",
     });
     const [loading, setLoading] = useState(false);
 
@@ -842,7 +853,7 @@ const CustomerEditDialog = ({ customer, isOpen, onOpenChange, onUpdate }) => {
                         </Label>
                         <Input
                             id="edit-email"
-                            value={customer.email}
+                            value={customer.email || ""}
                             disabled
                             className="col-span-3 bg-gray-100"
                         />

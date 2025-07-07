@@ -1249,15 +1249,19 @@ const CreateBookingDialog = ({
                                     />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {treks.map((trek) => (
-                                        <SelectItem
-                                            key={trek.id}
-                                            value={trek.id.toString()}
-                                        >
-                                            {trek.name || trek.title} - ₹
-                                            {trek.price || trek.base_price}
-                                        </SelectItem>
-                                    ))}
+                                    {treks
+                                        .filter(
+                                            (trek) => trek.status === "active"
+                                        )
+                                        .map((trek) => (
+                                            <SelectItem
+                                                key={trek.id}
+                                                value={trek.id.toString()}
+                                            >
+                                                {trek.name || trek.title} - ₹
+                                                {trek.price || trek.base_price}
+                                            </SelectItem>
+                                        ))}
                                 </SelectContent>
                             </Select>
                         </div>
