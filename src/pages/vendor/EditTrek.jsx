@@ -23,6 +23,7 @@ import DynamicActivities from "@/components/trek/DynamicActivities";
 import ImageUpload from "@/components/trek/ImageUpload";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 const EditTrek = () => {
     const navigate = useNavigate();
@@ -389,41 +390,36 @@ const EditTrek = () => {
 
     // Auto-generate duration based on days and nights
     useEffect(() => {
-        if (trek.durationDays && trek.durationNights) {
-            const days = parseInt(trek.durationDays);
-            const nights = parseInt(trek.durationNights);
-            if (!isNaN(days) && !isNaN(nights)) {
-                const generatedDuration = `${days}D/${nights}N`;
-                setTrek((prev) => ({
-                    ...prev,
-                    duration: generatedDuration,
-                }));
+        const days = parseInt(trek.durationDays);
+        const nights = parseInt(trek.durationNights);
+        if (!isNaN(days) && days > 0) {
+            let generatedDuration = `${days} Day${days > 1 ? "s" : ""}`;
+            if (!isNaN(nights) && nights > 0) {
+                generatedDuration += ` / ${nights} Night${
+                    nights > 1 ? "s" : ""
+                }`;
             }
-        } else if (trek.durationDays && !trek.durationNights) {
-            const days = parseInt(trek.durationDays);
-            if (!isNaN(days)) {
-                const generatedDuration = `${days}D`;
-                setTrek((prev) => ({
-                    ...prev,
-                    duration: generatedDuration,
-                }));
-            }
+            setTrek((prev) => ({
+                ...prev,
+                duration: generatedDuration,
+            }));
+        } else {
+            setTrek((prev) => ({
+                ...prev,
+                duration: "",
+            }));
         }
     }, [trek.durationDays, trek.durationNights]);
 
     // Trek stages functions
     const addTrekStage = () => {
-        setTrekStages((prev) => [
-            ...prev,
-            {
-                id: `stage-${Date.now()}`,
-                name: "",
-                description: "",
-                distance: "",
-                duration: "",
-                means_of_transport: "",
-            },
-        ]);
+        const newStage = {
+            id: `stage-${Date.now()}`,
+            stage_name: "",
+            means_of_transport: "",
+            date_time: "",
+        };
+        setTrekStages((prev) => [...prev, newStage]);
     };
 
     const updateTrekStage = (index, field, value) => {
@@ -809,11 +805,9 @@ const EditTrek = () => {
                     description: acc.description || "",
                 })),
                 trekStages: trekStages.map((stage) => ({
-                    name: stage.name,
-                    description: stage.description,
-                    distance: stage.distance || "",
-                    duration: stage.duration || "",
+                    stage_name: stage.stage_name || stage.name || "",
                     means_of_transport: stage.means_of_transport || "",
+                    date_time: stage.date_time || "",
                 })),
                 activities: activities.map((activity) => ({
                     name: activity.name,
@@ -885,6 +879,14 @@ const EditTrek = () => {
                     cancellationPolicy.descriptionPoints.length > 0 &&
                     cancellationPolicy.descriptionPoints.every(
                         (point) => point.trim() !== ""
+                    )
+                );
+            case "trek-stages":
+                return (
+                    trekStages.length > 0 &&
+                    trekStages.every(
+                        (stage) =>
+                            (stage.stage_name || stage.name) && stage.date_time
                     )
                 );
             default:
@@ -1301,47 +1303,19 @@ const EditTrek = () => {
                                                 <div>
                                                     <Label>Stage Name *</Label>
                                                     <Input
-                                                        value={stage.name || ""}
+                                                        value={
+                                                            stage.stage_name ||
+                                                            stage.name ||
+                                                            ""
+                                                        }
                                                         onChange={(e) =>
                                                             updateTrekStage(
                                                                 index,
-                                                                "name",
+                                                                "stage_name",
                                                                 e.target.value
                                                             )
                                                         }
                                                         placeholder="e.g., Base Camp to Summit"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label>Distance</Label>
-                                                    <Input
-                                                        value={
-                                                            stage.distance || ""
-                                                        }
-                                                        onChange={(e) =>
-                                                            updateTrekStage(
-                                                                index,
-                                                                "distance",
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        placeholder="e.g., 5 km"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label>Duration</Label>
-                                                    <Input
-                                                        value={
-                                                            stage.duration || ""
-                                                        }
-                                                        onChange={(e) =>
-                                                            updateTrekStage(
-                                                                index,
-                                                                "duration",
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        placeholder="e.g., 3 hours"
                                                     />
                                                 </div>
                                                 <div>
@@ -1363,23 +1337,30 @@ const EditTrek = () => {
                                                         placeholder="e.g., Walking, Bus, Train"
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                <Label>Description *</Label>
-                                                <Textarea
-                                                    value={
-                                                        stage.description || ""
-                                                    }
-                                                    onChange={(e) =>
-                                                        updateTrekStage(
-                                                            index,
-                                                            "description",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    placeholder="Describe this stage of the trek"
-                                                    rows={3}
-                                                />
+                                                <div>
+                                                    <Label>
+                                                        Date and Time *
+                                                    </Label>
+                                                    <DateTimePicker
+                                                        date={
+                                                            stage.date_time
+                                                                ? new Date(
+                                                                      stage.date_time
+                                                                  )
+                                                                : null
+                                                        }
+                                                        setDate={(date) =>
+                                                            updateTrekStage(
+                                                                index,
+                                                                "date_time",
+                                                                date
+                                                                    ? date.toISOString()
+                                                                    : ""
+                                                            )
+                                                        }
+                                                        placeholder="Select date and time"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
