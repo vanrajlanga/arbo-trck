@@ -5,15 +5,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+
 const DynamicItinerary = ({ duration, itinerary, onChange }) => {
     const [days, setDays] = useState(0);
+
     useEffect(() => {
-        // Extract number of days from duration string (e.g., "3D/2N" -> 3)
-        const dayMatch =
-            duration && typeof duration === "string"
-                ? duration.match(/(\d+)D/)
-                : null;
-        const extractedDays = dayMatch ? parseInt(dayMatch[1]) : 0;
+        // Extract number of days from duration string
+        // Handle both new format "X Days / Y Nights" and old format "XD/YN"
+        let extractedDays = 0;
+
+        if (duration && typeof duration === "string") {
+            // Try new format first: "X Days / Y Nights"
+            const newFormatMatch = duration.match(/(\d+)\s*Days?/i);
+            if (newFormatMatch) {
+                extractedDays = parseInt(newFormatMatch[1]);
+            } else {
+                // Fallback to old format: "XD/YN"
+                const oldFormatMatch = duration.match(/(\d+)D/);
+                if (oldFormatMatch) {
+                    extractedDays = parseInt(oldFormatMatch[1]);
+                }
+            }
+        }
+
         setDays(extractedDays);
 
         // Initialize itinerary if empty or days changed
@@ -36,6 +50,7 @@ const DynamicItinerary = ({ duration, itinerary, onChange }) => {
             onChange(newItinerary);
         }
     }, [duration, itinerary.length, onChange]);
+
     const addActivity = (dayIndex) => {
         const newItinerary = [...itinerary];
         const activityId = `day${dayIndex + 1}-activity${
@@ -47,6 +62,7 @@ const DynamicItinerary = ({ duration, itinerary, onChange }) => {
         });
         onChange(newItinerary);
     };
+
     const removeActivity = (dayIndex, activityIndex) => {
         const newItinerary = [...itinerary];
         if (newItinerary[dayIndex].activities.length > 1) {
@@ -54,11 +70,13 @@ const DynamicItinerary = ({ duration, itinerary, onChange }) => {
             onChange(newItinerary);
         }
     };
+
     const updateActivity = (dayIndex, activityIndex, value) => {
         const newItinerary = [...itinerary];
         newItinerary[dayIndex].activities[activityIndex].activity = value;
         onChange(newItinerary);
     };
+
     if (days === 0) {
         return /*#__PURE__*/ _jsx("div", {
             className: "text-center py-8 text-gray-500",
@@ -66,6 +84,7 @@ const DynamicItinerary = ({ duration, itinerary, onChange }) => {
                 "Please set the trek duration first to configure the itinerary.",
         });
     }
+
     return /*#__PURE__*/ _jsx("div", {
         className: "space-y-6",
         children: itinerary.map((day, dayIndex) => {
@@ -187,4 +206,5 @@ const DynamicItinerary = ({ duration, itinerary, onChange }) => {
         }),
     });
 };
+
 export default DynamicItinerary;

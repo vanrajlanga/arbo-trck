@@ -1189,7 +1189,9 @@ const CreateTrek = () => {
                                 className="space-y-4"
                             >
                                 <DynamicActivities
-                                    duration={trek.duration || "3D/2N"}
+                                    duration={
+                                        trek.duration || "3 Days / 2 Nights"
+                                    }
                                     activities={activities}
                                     onChange={setActivities}
                                 />
@@ -1201,7 +1203,9 @@ const CreateTrek = () => {
                                 className="space-y-4"
                             >
                                 <DynamicItinerary
-                                    duration={trek.duration || "3D/2N"}
+                                    duration={
+                                        trek.duration || "3 Days / 2 Nights"
+                                    }
                                     itinerary={itinerary}
                                     onChange={setItinerary}
                                 />

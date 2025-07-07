@@ -1560,7 +1560,9 @@ const EditTrek = () => {
                                 className="space-y-4"
                             >
                                 <DynamicItinerary
-                                    duration={trek.duration || "3D/2N"}
+                                    duration={
+                                        trek.duration || "3 Days / 2 Nights"
+                                    }
                                     itinerary={itinerary}
                                     onChange={handleItineraryChange}
                                 />
@@ -1861,7 +1863,9 @@ const EditTrek = () => {
                                 className="space-y-4"
                             >
                                 <DynamicAccommodation
-                                    duration={trek.duration || "3D/2N"}
+                                    duration={
+                                        trek.duration || "3 Days / 2 Nights"
+                                    }
                                     accommodations={accommodations}
                                     onChange={setAccommodations}
                                 />

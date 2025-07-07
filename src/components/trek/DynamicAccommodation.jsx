@@ -15,12 +15,22 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 const DynamicAccommodation = ({ duration, accommodations, onChange }) => {
     const [nights, setNights] = useState(0);
     useEffect(() => {
-        // Extract number of nights from duration string (e.g., "3D/2N" -> 2)
-        const nightMatch =
-            duration && typeof duration === "string"
-                ? duration.match(/(\d+)N/)
-                : null;
-        const extractedNights = nightMatch ? parseInt(nightMatch[1]) : 0;
+        // Extract number of nights from duration string
+        // Handle both new format "X Days / Y Nights" and old format "XD/YN"
+        let extractedNights = 0;
+        if (duration && typeof duration === "string") {
+            // Try new format first: "X Days / Y Nights"
+            const newFormatMatch = duration.match(/(\d+)\s*Nights?/i);
+            if (newFormatMatch) {
+                extractedNights = parseInt(newFormatMatch[1]);
+            } else {
+                // Fallback to old format: "XD/YN"
+                const oldFormatMatch = duration.match(/(\d+)N/);
+                if (oldFormatMatch) {
+                    extractedNights = parseInt(oldFormatMatch[1]);
+                }
+            }
+        }
         setNights(extractedNights);
 
         // Initialize accommodations if empty or nights changed
