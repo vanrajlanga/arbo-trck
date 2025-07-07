@@ -48,8 +48,6 @@ const EditTrek = () => {
         price: "",
         difficulty: "",
         maxParticipants: "",
-        startDate: "",
-        endDate: "",
         cancellationPolicy: "",
         rating: 0.0,
         discountValue: 0.0,
@@ -59,6 +57,9 @@ const EditTrek = () => {
     const [trekStages, setTrekStages] = useState([]);
     const [inclusions, setInclusions] = useState([]);
     const [exclusions, setExclusions] = useState([]);
+    const [batches, setBatches] = useState([
+        { startDate: "", endDate: "", capacity: 20 },
+    ]);
     const [meetingPoint, setMeetingPoint] = useState({
         id: "",
         cityId: "",
@@ -196,8 +197,7 @@ const EditTrek = () => {
                             (typeof trekData.slots === "object"
                                 ? trekData.slots.total
                                 : trekData.slots) || "",
-                        startDate: trekData.startDate || "",
-                        endDate: trekData.endDate || "",
+                        cancellationPolicy: trekData.cancellationPolicy || "",
                         rating: trekData.rating || 0.0,
                         discountValue: trekData.discountValue || 0.0,
                         discountType: trekData.discountType || "percentage",
@@ -348,6 +348,21 @@ const EditTrek = () => {
                         });
                     }
                     setOtherPolicies(trekData.otherPolicies || []);
+
+                    // Set batches
+                    if (trekData.batches && trekData.batches.length > 0) {
+                        setBatches(
+                            trekData.batches.map((b) => ({
+                                startDate: b.startDate || "",
+                                endDate: b.endDate || "",
+                                capacity: b.capacity || 20,
+                            }))
+                        );
+                    } else {
+                        setBatches([
+                            { startDate: "", endDate: "", capacity: 20 },
+                        ]);
+                    }
                 } else {
                     toast.error("Failed to load trek data");
                     navigate("/vendor/treks");
@@ -792,8 +807,6 @@ const EditTrek = () => {
                 trekType: trek.trekType || "",
                 category: trek.category || "",
                 maxParticipants: parseInt(trek.maxParticipants) || 20,
-                startDate: trek.startDate,
-                endDate: trek.endDate,
                 meetingPoint: meetingPoint.locationDetails,
                 meetingTime: meetingPoint.time,
                 inclusions: inclusions.map((inc) => inc.item),
@@ -829,6 +842,7 @@ const EditTrek = () => {
                     title: policy.title,
                     description: policy.description,
                 })),
+                batches: batches.filter((b) => b.startDate), // Only send valid dates
             };
 
             const response = await apiVendor.updateTrek(id, formData);
@@ -859,7 +873,7 @@ const EditTrek = () => {
             case "pricing":
                 return trek.price;
             case "dates":
-                return trek.startDate;
+                return batches.length > 0 && batches.every((b) => b.startDate);
             case "activities":
                 return activities.length > 0;
             case "itinerary":
@@ -1514,32 +1528,88 @@ const EditTrek = () => {
 
                             {/* Dates Tab */}
                             <TabsContent value="dates" className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="startDate">
-                                            Start Date *
-                                        </Label>
-                                        <Input
-                                            id="startDate"
-                                            name="startDate"
-                                            type="date"
-                                            value={trek.startDate}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="endDate">
-                                            End Date
-                                        </Label>
-                                        <Input
-                                            id="endDate"
-                                            name="endDate"
-                                            type="date"
-                                            value={trek.endDate}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
+                                <div className="space-y-4">
+                                    {batches.map((range, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end"
+                                        >
+                                            <div>
+                                                <Label>Start Date *</Label>
+                                                <Input
+                                                    type="date"
+                                                    value={range.startDate}
+                                                    onChange={(e) => {
+                                                        const newDates = [
+                                                            ...batches,
+                                                        ];
+                                                        newDates[
+                                                            idx
+                                                        ].startDate =
+                                                            e.target.value;
+                                                        setBatches(newDates);
+                                                    }}
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>End Date</Label>
+                                                <Input
+                                                    type="date"
+                                                    value={range.endDate}
+                                                    onChange={(e) => {
+                                                        const newDates = [
+                                                            ...batches,
+                                                        ];
+                                                        newDates[idx].endDate =
+                                                            e.target.value;
+                                                        setBatches(newDates);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {batches.length > 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setBatches(
+                                                                batches.filter(
+                                                                    (_, i) =>
+                                                                        i !==
+                                                                        idx
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                {idx === batches.length - 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setBatches([
+                                                                ...batches,
+                                                                {
+                                                                    startDate:
+                                                                        "",
+                                                                    endDate: "",
+                                                                    capacity: 20,
+                                                                },
+                                                            ])
+                                                        }
+                                                    >
+                                                        <Plus className="w-4 h-4 mr-1" />
+                                                        Add Date Range
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </TabsContent>
 
@@ -1740,10 +1810,6 @@ const EditTrek = () => {
                                                 )
                                             }
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Debug: {meetingPoint.time} (type:{" "}
-                                            {typeof meetingPoint.time})
-                                        </p>
                                     </div>
                                 </div>
 

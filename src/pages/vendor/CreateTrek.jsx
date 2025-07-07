@@ -42,8 +42,6 @@ const CreateTrek = () => {
         price: "",
         difficulty: "",
         maxParticipants: "",
-        startDate: "",
-        endDate: "",
         cancellationPolicy: "",
         city_id: "",
         rating: 0.0,
@@ -55,6 +53,9 @@ const CreateTrek = () => {
     const [trekStages, setTrekStages] = useState([]);
     const [inclusions, setInclusions] = useState([]);
     const [exclusions, setExclusions] = useState([]);
+    const [batches, setBatches] = useState([
+        { startDate: "", endDate: "", capacity: 20 },
+    ]);
     const [meetingPoint, setMeetingPoint] = useState({
         id: "",
         cityId: "",
@@ -418,8 +419,6 @@ const CreateTrek = () => {
                 trekType: trek.trekType || "",
                 category: trek.category || "",
                 maxParticipants: parseInt(trek.maxParticipants) || 20,
-                startDate: trek.startDate,
-                endDate: trek.endDate,
                 meetingPoint: meetingPoint.locationDetails,
                 meetingTime: meetingPoint.time,
                 inclusions: inclusions.map((inc) => inc.item),
@@ -455,6 +454,7 @@ const CreateTrek = () => {
                     title: policy.title,
                     description: policy.description,
                 })),
+                multipleDates: batches.filter((d) => d.startDate), // Only send valid dates
             };
 
             console.log("Submitting trek data:", trekData);
@@ -494,7 +494,7 @@ const CreateTrek = () => {
             case "pricing":
                 return trek.price && trek.difficulty && trek.maxParticipants;
             case "dates":
-                return trek.startDate && trek.endDate;
+                return batches.length > 0 && batches.every((b) => b.startDate);
             case "activities":
                 return true; // Optional
             case "itinerary":
@@ -1154,32 +1154,111 @@ const CreateTrek = () => {
 
                             {/* Step 6: Dates */}
                             <TabsContent value="dates" className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="startDate">
-                                            Start Date *
-                                        </Label>
-                                        <Input
-                                            id="startDate"
-                                            name="startDate"
-                                            type="date"
-                                            value={trek.startDate}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="endDate">
-                                            End Date
-                                        </Label>
-                                        <Input
-                                            id="endDate"
-                                            name="endDate"
-                                            type="date"
-                                            value={trek.endDate}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
+                                <div className="space-y-4">
+                                    {batches.map((batch, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
+                                        >
+                                            <div>
+                                                <Label>Start Date *</Label>
+                                                <Input
+                                                    type="date"
+                                                    value={batch.startDate}
+                                                    onChange={(e) => {
+                                                        const newBatches = [
+                                                            ...batches,
+                                                        ];
+                                                        newBatches[
+                                                            idx
+                                                        ].startDate =
+                                                            e.target.value;
+                                                        setBatches(newBatches);
+                                                    }}
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>End Date</Label>
+                                                <Input
+                                                    type="date"
+                                                    value={batch.endDate}
+                                                    onChange={(e) => {
+                                                        const newBatches = [
+                                                            ...batches,
+                                                        ];
+                                                        newBatches[
+                                                            idx
+                                                        ].endDate =
+                                                            e.target.value;
+                                                        setBatches(newBatches);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>Capacity</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={batch.capacity}
+                                                    onChange={(e) => {
+                                                        const newBatches = [
+                                                            ...batches,
+                                                        ];
+                                                        newBatches[
+                                                            idx
+                                                        ].capacity =
+                                                            parseInt(
+                                                                e.target.value
+                                                            ) || 20;
+                                                        setBatches(newBatches);
+                                                    }}
+                                                    min="1"
+                                                    max="100"
+                                                />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {batches.length > 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setBatches(
+                                                                batches.filter(
+                                                                    (_, i) =>
+                                                                        i !==
+                                                                        idx
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                {idx === batches.length - 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setBatches([
+                                                                ...batches,
+                                                                {
+                                                                    startDate:
+                                                                        "",
+                                                                    endDate: "",
+                                                                    capacity: 20,
+                                                                },
+                                                            ])
+                                                        }
+                                                    >
+                                                        <Plus className="w-4 h-4 mr-1" />
+                                                        Add Batch
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </TabsContent>
 
