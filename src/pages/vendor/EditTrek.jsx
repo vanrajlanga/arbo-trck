@@ -47,7 +47,6 @@ const EditTrek = () => {
         durationNights: "",
         price: "",
         difficulty: "",
-        maxParticipants: "",
         cancellationPolicy: "",
         rating: 0.0,
         discountValue: 0.0,
@@ -193,10 +192,6 @@ const EditTrek = () => {
                         durationNights: trekData.durationNights || "",
                         price: trekData.price || "",
                         difficulty: trekData.difficulty || "moderate",
-                        maxParticipants:
-                            (typeof trekData.slots === "object"
-                                ? trekData.slots.total
-                                : trekData.slots) || "",
                         cancellationPolicy: trekData.cancellationPolicy || "",
                         rating: trekData.rating || 0.0,
                         discountValue: trekData.discountValue || 0.0,
@@ -353,6 +348,7 @@ const EditTrek = () => {
                     if (trekData.batches && trekData.batches.length > 0) {
                         setBatches(
                             trekData.batches.map((b) => ({
+                                id: b.id,
                                 startDate: b.startDate || "",
                                 endDate: b.endDate || "",
                                 capacity: b.capacity || 20,
@@ -806,7 +802,6 @@ const EditTrek = () => {
                 difficulty: trek.difficulty || "moderate",
                 trekType: trek.trekType || "",
                 category: trek.category || "",
-                maxParticipants: parseInt(trek.maxParticipants) || 20,
                 meetingPoint: meetingPoint.locationDetails,
                 meetingTime: meetingPoint.time,
                 inclusions: inclusions.map((inc) => inc.item),
@@ -1396,19 +1391,6 @@ const EditTrek = () => {
                                             onChange={handleInputChange}
                                             placeholder="0"
                                             required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="maxParticipants">
-                                            Max Participants
-                                        </Label>
-                                        <Input
-                                            id="maxParticipants"
-                                            name="maxParticipants"
-                                            type="number"
-                                            value={trek.maxParticipants}
-                                            onChange={handleInputChange}
-                                            placeholder="10"
                                         />
                                     </div>
                                 </div>

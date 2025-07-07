@@ -41,7 +41,6 @@ const CreateTrek = () => {
         durationNights: "",
         price: "",
         difficulty: "",
-        maxParticipants: "",
         cancellationPolicy: "",
         city_id: "",
         rating: 0.0,
@@ -492,7 +491,7 @@ const CreateTrek = () => {
                     )
                 );
             case "pricing":
-                return trek.price && trek.difficulty && trek.maxParticipants;
+                return trek.price && trek.difficulty;
             case "dates":
                 return batches.length > 0 && batches.every((b) => b.startDate);
             case "activities":
@@ -1009,7 +1008,7 @@ const CreateTrek = () => {
 
                             {/* Step 5: Pricing */}
                             <TabsContent value="pricing" className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <Label htmlFor="price">
                                             Price per Person *
@@ -1022,19 +1021,6 @@ const CreateTrek = () => {
                                             onChange={handleInputChange}
                                             placeholder="0"
                                             required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="maxParticipants">
-                                            Max Participants
-                                        </Label>
-                                        <Input
-                                            id="maxParticipants"
-                                            name="maxParticipants"
-                                            type="number"
-                                            value={trek.maxParticipants}
-                                            onChange={handleInputChange}
-                                            placeholder="10"
                                         />
                                     </div>
                                     <div>

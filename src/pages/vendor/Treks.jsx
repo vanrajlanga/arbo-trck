@@ -421,26 +421,67 @@ const Treks = () => {
                                         Availability
                                     </h3>
                                     <div className="space-y-2 text-sm">
-                                        <div>
-                                            <span className="font-medium">
-                                                Total Slots:
-                                            </span>{" "}
-                                            {selectedTrek.slots?.total || 0}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium">
-                                                Booked:
-                                            </span>{" "}
-                                            {selectedTrek.slots?.booked || 0}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium">
-                                                Available:
-                                            </span>{" "}
-                                            {(selectedTrek.slots?.total || 0) -
-                                                (selectedTrek.slots?.booked ||
-                                                    0)}
-                                        </div>
+                                        {selectedTrek.batches &&
+                                        selectedTrek.batches.length > 0 ? (
+                                            <>
+                                                <div>
+                                                    <span className="font-medium">
+                                                        Total Capacity:
+                                                    </span>{" "}
+                                                    {selectedTrek.batches.reduce(
+                                                        (sum, batch) =>
+                                                            sum +
+                                                            (batch.capacity ||
+                                                                0),
+                                                        0
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium">
+                                                        Total Booked:
+                                                    </span>{" "}
+                                                    {selectedTrek.batches.reduce(
+                                                        (sum, batch) =>
+                                                            sum +
+                                                            (batch.bookedSlots ||
+                                                                0),
+                                                        0
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium">
+                                                        Available:
+                                                    </span>{" "}
+                                                    {selectedTrek.batches.reduce(
+                                                        (sum, batch) =>
+                                                            sum +
+                                                            (batch.capacity ||
+                                                                0),
+                                                        0
+                                                    ) -
+                                                        selectedTrek.batches.reduce(
+                                                            (sum, batch) =>
+                                                                sum +
+                                                                (batch.bookedSlots ||
+                                                                    0),
+                                                            0
+                                                        )}
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium">
+                                                        Batches:
+                                                    </span>{" "}
+                                                    {
+                                                        selectedTrek.batches
+                                                            .length
+                                                    }
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-gray-500">
+                                                No batches configured
+                                            </div>
+                                        )}
                                         <div>
                                             <span className="font-medium">
                                                 Status:
@@ -608,7 +649,16 @@ const TrekCard = ({
     onDelete,
     onToggleStatus,
 }) => {
-    const availableSlots = (trek.slots?.total || 0) - (trek.slots?.booked || 0);
+    // Calculate total capacity and booked slots from batches
+    const totalCapacity =
+        trek.batches?.reduce((sum, batch) => sum + (batch.capacity || 0), 0) ||
+        0;
+    const totalBooked =
+        trek.batches?.reduce(
+            (sum, batch) => sum + (batch.bookedSlots || 0),
+            0
+        ) || 0;
+    const availableSlots = totalCapacity - totalBooked;
 
     return (
         <Card className="hover:shadow-md transition-shadow">
@@ -648,7 +698,7 @@ const TrekCard = ({
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                             <Users className="h-4 w-4 mr-1" />
-                            {availableSlots}/{trek.slots?.total || 0} available
+                            {availableSlots}/{totalCapacity} available
                         </div>
                     </div>
 
@@ -727,9 +777,20 @@ const TrekTable = ({
                     </TableHeader>
                     <TableBody>
                         {treks.map((trek) => {
-                            const availableSlots =
-                                (trek.slots?.total || 0) -
-                                (trek.slots?.booked || 0);
+                            // Calculate total capacity and booked slots from batches
+                            const totalCapacity =
+                                trek.batches?.reduce(
+                                    (sum, batch) => sum + (batch.capacity || 0),
+                                    0
+                                ) || 0;
+                            const totalBooked =
+                                trek.batches?.reduce(
+                                    (sum, batch) =>
+                                        sum + (batch.bookedSlots || 0),
+                                    0
+                                ) || 0;
+                            const availableSlots = totalCapacity - totalBooked;
+
                             return (
                                 <TableRow key={trek.id}>
                                     <TableCell className="font-medium">
@@ -739,8 +800,7 @@ const TrekTable = ({
                                     <TableCell>{trek.duration}</TableCell>
                                     <TableCell>₹{trek.price}</TableCell>
                                     <TableCell>
-                                        {availableSlots}/
-                                        {trek.slots?.total || 0}
+                                        {availableSlots}/{totalCapacity}
                                     </TableCell>
                                     <TableCell>
                                         <Badge
