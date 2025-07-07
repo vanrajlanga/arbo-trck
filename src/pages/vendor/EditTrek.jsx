@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { apiVendor } from "@/lib/api";
+import {
+    formatTrekDataForAPI,
+    formatTrekDataForForm,
+    processInclusions,
+    processExclusions,
+    processBatches,
+    processCancellationPolicy,
+} from "@/lib/trekUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +47,7 @@ const EditTrek = () => {
     const [trek, setTrek] = useState({
         name: "",
         destination_id: "",
+        city_id: "",
         description: "",
         trekType: "",
         category: "",
@@ -47,7 +56,7 @@ const EditTrek = () => {
         durationNights: "",
         price: "",
         difficulty: "moderate",
-        cancellationPolicy: "",
+        status: "deactive",
         discountValue: 0.0,
         discountType: "percentage",
         hasDiscount: false,
@@ -60,6 +69,9 @@ const EditTrek = () => {
         trekStages: [],
         images: [],
         batches: [],
+        cancellationPolicies: [],
+        otherPolicies: [],
+        activities: [],
     });
     const [trekStages, setTrekStages] = useState([]);
     const [inclusions, setInclusions] = useState([]);
@@ -186,82 +198,10 @@ const EditTrek = () => {
                     const trekData = response.data;
                     console.log("Loaded trek data:", trekData);
 
-                    // Map basic trek data
-                    setTrek({
-                        name: trekData.name || "",
-                        destination_id: trekData.destination_id
-                            ? String(trekData.destination_id)
-                            : "",
-                        description: trekData.description || "",
-                        trekType: trekData.trekType || "",
-                        category: trekData.category || "",
-                        duration: trekData.duration || "",
-                        durationDays: trekData.durationDays || "",
-                        durationNights: trekData.durationNights || "",
-                        price: trekData.price || "",
-                        difficulty: trekData.difficulty || "moderate",
-                        cancellationPolicy: trekData.cancellationPolicy || "",
-                        discountValue: trekData.discountValue || 0.0,
-                        discountType: trekData.discountType || "percentage",
-                        hasDiscount: trekData.hasDiscount || false,
-                        inclusions: trekData.inclusions || [],
-                        exclusions: trekData.exclusions || [],
-                        meetingPoint: trekData.meetingPoint || "",
-                        meetingTime: trekData.meetingTime || "",
-                        itinerary: trekData.itinerary || [],
-                        accommodations: trekData.accommodations || [],
-                        trekStages: trekData.trekStages || [],
-                        images: trekData.images || [],
-                        batches: trekData.batches || [],
-                    });
+                    // Map basic trek data using utility function
+                    setTrek(formatTrekDataForForm(trekData));
 
-                    // Map inclusions and exclusions
-                    const processInclusions = (inclusions) => {
-                        if (!inclusions) return [];
-                        if (Array.isArray(inclusions)) {
-                            return inclusions.map((item, index) => ({
-                                id: `inclusion-${index}`,
-                                item:
-                                    typeof item === "string"
-                                        ? item
-                                        : item.item || item.name || "",
-                            }));
-                        }
-                        if (typeof inclusions === "string") {
-                            return inclusions
-                                .split("\n")
-                                .filter((item) => item.trim())
-                                .map((item, index) => ({
-                                    id: `inclusion-${index}`,
-                                    item: item.trim(),
-                                }));
-                        }
-                        return [];
-                    };
-
-                    const processExclusions = (exclusions) => {
-                        if (!exclusions) return [];
-                        if (Array.isArray(exclusions)) {
-                            return exclusions.map((item, index) => ({
-                                id: `exclusion-${index}`,
-                                item:
-                                    typeof item === "string"
-                                        ? item
-                                        : item.item || item.name || "",
-                            }));
-                        }
-                        if (typeof exclusions === "string") {
-                            return exclusions
-                                .split("\n")
-                                .filter((item) => item.trim())
-                                .map((item, index) => ({
-                                    id: `exclusion-${index}`,
-                                    item: item.trim(),
-                                }));
-                        }
-                        return [];
-                    };
-
+                    // Map inclusions and exclusions using utility functions
                     setInclusions(processInclusions(trekData.inclusions));
                     setExclusions(processExclusions(trekData.exclusions));
 
@@ -335,46 +275,14 @@ const EditTrek = () => {
                     );
                     setActivities(trekData.activities || []);
 
-                    // Load policies
-                    if (
-                        trekData.cancellationPolicies &&
-                        trekData.cancellationPolicies.length > 0
-                    ) {
-                        setCancellationPolicy(trekData.cancellationPolicies[0]);
-                    } else {
-                        setCancellationPolicy({
-                            title: "Cancellation Policy",
-                            description:
-                                "Standard cancellation terms and conditions",
-                            rules: [
-                                { rule: "Full refund", deduction: "0%" },
-                                { rule: "Partial refund", deduction: "50%" },
-                                { rule: "No refund", deduction: "100%" },
-                            ],
-                            descriptionPoints: [
-                                "Cancellation must be made in writing",
-                                "Refunds processed within 5-7 business days",
-                                "Force majeure events may affect cancellation terms",
-                            ],
-                        });
-                    }
+                    // Load policies using utility function
+                    setCancellationPolicy(
+                        processCancellationPolicy(trekData.cancellationPolicies)
+                    );
                     setOtherPolicies(trekData.otherPolicies || []);
 
-                    // Set batches
-                    if (trekData.batches && trekData.batches.length > 0) {
-                        setBatches(
-                            trekData.batches.map((b) => ({
-                                id: b.id,
-                                startDate: b.startDate || "",
-                                endDate: b.endDate || "",
-                                capacity: b.capacity || 20,
-                            }))
-                        );
-                    } else {
-                        setBatches([
-                            { startDate: "", endDate: "", capacity: 20 },
-                        ]);
-                    }
+                    // Set batches using utility function
+                    setBatches(processBatches(trekData.batches));
                 } else {
                     toast.error("Failed to load trek data");
                     navigate("/vendor/treks");
@@ -799,39 +707,31 @@ const EditTrek = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!trek.name || !trek.destination_id || !trek.description) {
+        // Basic validation
+        if (!trek.name || !trek.destination_id || !trek.price) {
             toast.error("Please fill in all required fields");
             return;
         }
 
         try {
-            setIsSubmitting(true);
+            setSaving(true);
 
-            const formData = {
-                name: trek.name,
-                destination_id: trek.destination_id,
-                description: trek.description,
-                trekType: trek.trekType,
-                category: trek.category,
-                duration: trek.duration,
-                durationDays: trek.durationDays,
-                durationNights: trek.durationNights,
-                price: trek.price,
-                difficulty: trek.difficulty,
-                cancellationPolicy: trek.cancellationPolicy,
-                discountValue: trek.discountValue,
-                discountType: trek.discountType,
-                hasDiscount: trek.hasDiscount,
-                inclusions: trek.inclusions,
-                exclusions: trek.exclusions,
-                meetingPoint: trek.meetingPoint,
-                meetingTime: trek.meetingTime,
-                itinerary: trek.itinerary,
-                accommodations: trek.accommodations,
-                trekStages: trek.trekStages,
-                images: trek.images,
-                batches: trek.batches,
-            };
+            // Use the utility function to format data for API
+            const formData = formatTrekDataForAPI({
+                trekData: trek,
+                inclusions,
+                exclusions,
+                itinerary,
+                accommodations,
+                trekStages,
+                batches,
+                activities,
+                cancellationPolicy,
+                otherPolicies,
+                images,
+            });
+
+            console.log("Submitting trek data:", formData);
 
             const response = await apiVendor.updateTrek(id, formData);
 
@@ -845,7 +745,7 @@ const EditTrek = () => {
             console.error("Error updating trek:", error);
             toast.error("Failed to update trek: " + error.message);
         } finally {
-            setIsSubmitting(false);
+            setSaving(false);
         }
     };
 

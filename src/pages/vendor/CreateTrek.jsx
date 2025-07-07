@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiVendor } from "@/lib/api";
+import { formatTrekDataForAPI } from "@/lib/trekUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ const CreateTrek = () => {
     const [trek, setTrek] = useState({
         name: "",
         destination_id: "",
+        city_id: "",
         description: "",
         trekType: "",
         category: "",
@@ -41,7 +43,7 @@ const CreateTrek = () => {
         durationNights: "",
         price: "",
         difficulty: "moderate",
-        cancellationPolicy: "",
+        status: "deactive",
         discountValue: 0.0,
         discountType: "percentage",
         hasDiscount: false,
@@ -54,6 +56,9 @@ const CreateTrek = () => {
         trekStages: [],
         images: [],
         batches: [],
+        cancellationPolicies: [],
+        otherPolicies: [],
+        activities: [],
     });
 
     const [trekStages, setTrekStages] = useState([]);
@@ -413,31 +418,20 @@ const CreateTrek = () => {
         try {
             setLoading(true);
 
-            const formData = {
-                name: trek.name,
-                destination_id: trek.destination_id,
-                description: trek.description,
-                trekType: trek.trekType,
-                category: trek.category,
-                duration: trek.duration,
-                durationDays: trek.durationDays,
-                durationNights: trek.durationNights,
-                price: trek.price,
-                difficulty: trek.difficulty,
-                cancellationPolicy: trek.cancellationPolicy,
-                discountValue: trek.discountValue,
-                discountType: trek.discountType,
-                hasDiscount: trek.hasDiscount,
-                inclusions: trek.inclusions,
-                exclusions: trek.exclusions,
-                meetingPoint: trek.meetingPoint,
-                meetingTime: trek.meetingTime,
-                itinerary: trek.itinerary,
-                accommodations: trek.accommodations,
-                trekStages: trek.trekStages,
-                images: trek.images,
-                batches: trek.batches,
-            };
+            // Use the utility function to format data for API
+            const formData = formatTrekDataForAPI({
+                trekData: trek,
+                inclusions,
+                exclusions,
+                itinerary,
+                accommodations,
+                trekStages,
+                batches,
+                activities,
+                cancellationPolicy,
+                otherPolicies,
+                images,
+            });
 
             console.log("Submitting trek data:", formData);
 
