@@ -379,12 +379,7 @@ const Bookings = () => {
         // Validate travelers
         for (let i = 0; i < newBooking.travelers.length; i++) {
             const traveler = newBooking.travelers[i];
-            if (
-                !traveler.name ||
-                !traveler.age ||
-                !traveler.phone ||
-                !traveler.emergency_contact_phone
-            ) {
+            if (!traveler.name || !traveler.age || !traveler.phone) {
                 toast.error(
                     `Please fill all required fields for traveler ${i + 1}`
                 );
@@ -1820,7 +1815,7 @@ const CreateBookingDialog = ({
                                         </div>
                                         <div className="space-y-2">
                                             <Label>
-                                                Emergency Contact Phone *
+                                                Emergency Contact Phone
                                             </Label>
                                             <Input
                                                 value={
@@ -1834,7 +1829,6 @@ const CreateBookingDialog = ({
                                                     )
                                                 }
                                                 placeholder="Emergency contact number"
-                                                required
                                             />
                                         </div>
                                         <div className="space-y-2">
