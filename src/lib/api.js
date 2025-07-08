@@ -673,6 +673,13 @@ export const apiV1 = {
     getPopularStates: () => apiCall("/api/v1/states/popular"),
     getStatesByRegion: (region) => apiCall(`/api/v1/states/region/${region}`),
 
+    // City endpoints (public - for mobile app)
+    getCities: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(`/api/v1/cities${queryString ? `?${queryString}` : ""}`);
+    },
+    getCityById: (id) => apiCall(`/api/v1/cities/${id}`),
+
     // Pickup Points
     createPickupPoint: (pickupPointData) =>
         apiCall("/api/v1/locations/pickup-points", {
@@ -707,6 +714,19 @@ export const apiV1 = {
         apiCall(`/api/v1/customers/${id}`, {
             method: "PUT",
             body: JSON.stringify(customerData),
+        }),
+
+    // Customer Auth endpoints (for mobile app)
+    customerFirebaseVerify: (firebaseIdToken) =>
+        apiCall("/api/v1/customer/auth/firebase-verify", {
+            method: "POST",
+            body: JSON.stringify({ firebaseIdToken }),
+        }),
+    getCustomerProfile: () => apiCall("/api/v1/customer/auth/profile"),
+    updateCustomerProfile: (profileData) =>
+        apiCall("/api/v1/customer/auth/profile", {
+            method: "PUT",
+            body: JSON.stringify(profileData),
         }),
 
     // Coupon endpoints (public - for mobile app)
