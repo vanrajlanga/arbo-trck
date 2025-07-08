@@ -18,6 +18,7 @@ import {
     Phone,
     Mail,
     Plus,
+    CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,9 @@ const Bookings = () => {
     const [analyticsLoading, setAnalyticsLoading] = useState(true);
     const [treksLoading, setTreksLoading] = useState(false);
     const [customersLoading, setCustomersLoading] = useState(false);
+    const [existingTravelers, setExistingTravelers] = useState([]);
+    const [existingTravelersLoading, setExistingTravelersLoading] =
+        useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [isNewBookingDialogOpen, setIsNewBookingDialogOpen] = useState(false);
@@ -210,6 +214,29 @@ const Bookings = () => {
             toast.error("Failed to fetch customers");
         } finally {
             setCustomersLoading(false);
+        }
+    };
+
+    // Fetch existing travelers for a customer
+    const fetchExistingTravelers = async (customerId) => {
+        if (!customerId || customerId === 0) {
+            setExistingTravelers([]);
+            return;
+        }
+
+        try {
+            setExistingTravelersLoading(true);
+            const response = await apiVendor.getCustomerTravelers(customerId);
+            if (response.success) {
+                setExistingTravelers(response.data || []);
+            } else {
+                setExistingTravelers([]);
+            }
+        } catch (error) {
+            console.error("Error fetching existing travelers:", error);
+            setExistingTravelers([]);
+        } finally {
+            setExistingTravelersLoading(false);
         }
     };
 
@@ -330,9 +357,14 @@ const Bookings = () => {
             ...newBooking,
             [name]: name === "travelers" ? parseInt(value) : value,
         });
+
+        // If customer is selected, fetch existing travelers
+        if (name === "customerId" && value && value !== "0") {
+            fetchExistingTravelers(parseInt(value));
+        }
     };
 
-    // Create new booking
+    // Create new booking with Razorpay payment
     const handleCreateBooking = async () => {
         // Validate required fields
         if (
@@ -361,54 +393,134 @@ const Bookings = () => {
         }
 
         try {
-            const bookingData = {
+            // Get trek details to calculate amount
+            const selectedTrek = treks.find(
+                (trek) => trek.id === newBooking.trekId
+            );
+            if (!selectedTrek) {
+                toast.error("Selected trek not found");
+                return;
+            }
+
+            const baseAmount =
+                selectedTrek.price || selectedTrek.base_price || 0;
+            const finalAmount = baseAmount * newBooking.travelers.length;
+
+            // Create Razorpay order
+            const orderData = {
                 trekId: newBooking.trekId,
                 customerId: newBooking.customerId,
                 travelers: newBooking.travelers,
-                status: newBooking.status,
-                paymentStatus: newBooking.paymentStatus,
-                specialRequests: newBooking.specialRequests,
+                finalAmount: finalAmount,
             };
 
-            const response = await apiVendor.createBooking(bookingData);
+            const orderResponse = await apiVendor.createTrekOrder(orderData);
 
-            // The backend returns data directly without a success field
-            if (response && response.message) {
-                toast.success("Booking created successfully");
-
-                // Reset form and close dialog
-                setNewBooking({
-                    trekId: 0,
-                    customerId: 0,
-                    travelers: [
-                        {
-                            name: "",
-                            age: "",
-                            gender: "male",
-                            phone: "",
-                            email: "",
-                            emergency_contact_name: "",
-                            emergency_contact_phone: "",
-                            emergency_contact_relation: "Self",
-                            medical_conditions: "",
-                            dietary_restrictions: "",
-                        },
-                    ],
-                    status: "confirmed",
-                    paymentStatus: "completed",
-                    specialRequests: "",
-                });
-
-                setIsNewBookingDialogOpen(false);
-
-                // Refresh bookings
-                fetchBookings();
-            } else {
-                toast.error(response.message || "Failed to create booking");
+            if (!orderResponse.success) {
+                toast.error(
+                    orderResponse.message || "Failed to create payment order"
+                );
+                return;
             }
+
+            // Close the modal before opening Razorpay popup
+            setIsNewBookingDialogOpen(false);
+
+            // Initialize Razorpay checkout
+            const options = {
+                key:
+                    import.meta.env.VITE_RAZORPAY_KEY_ID ||
+                    "rzp_test_YOUR_KEY_ID", // Replace with your Razorpay key
+                amount: orderResponse.order.amount,
+                currency: orderResponse.order.currency,
+                name: "Arobo Trekking",
+                description: `Booking for ${
+                    selectedTrek.name || selectedTrek.title
+                }`,
+                order_id: orderResponse.order.id,
+                handler: async function (response) {
+                    try {
+                        // Verify payment and create booking
+                        const paymentData = {
+                            orderId: response.razorpay_order_id,
+                            paymentId: response.razorpay_payment_id,
+                            signature: response.razorpay_signature,
+                            trekId: newBooking.trekId,
+                            customerId: newBooking.customerId,
+                            travelers: newBooking.travelers,
+                            finalAmount: finalAmount,
+                            pickupPointId: null, // Add if needed
+                            couponCode: null, // Add if needed
+                        };
+
+                        const bookingResponse = await apiVendor.verifyPayment(
+                            paymentData
+                        );
+
+                        if (bookingResponse.success) {
+                            toast.success(
+                                "Booking created successfully with payment"
+                            );
+
+                            // Reset form
+                            setNewBooking({
+                                trekId: 0,
+                                customerId: 0,
+                                travelers: [
+                                    {
+                                        name: "",
+                                        age: "",
+                                        gender: "male",
+                                        phone: "",
+                                        email: "",
+                                        emergency_contact_name: "",
+                                        emergency_contact_phone: "",
+                                        emergency_contact_relation: "Self",
+                                        medical_conditions: "",
+                                        dietary_restrictions: "",
+                                    },
+                                ],
+                                status: "confirmed",
+                                paymentStatus: "completed",
+                                specialRequests: "",
+                            });
+
+                            // Refresh bookings
+                            fetchBookings();
+                        } else {
+                            toast.error(
+                                bookingResponse.message ||
+                                    "Failed to create booking"
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Error verifying payment:", error);
+                        toast.error("Failed to verify payment");
+                    }
+                },
+                prefill: {
+                    name: "Customer Name", // You can get this from customer data
+                    email: "customer@example.com", // You can get this from customer data
+                    contact: "9999999999", // You can get this from customer data
+                },
+                theme: {
+                    color: "#10b981",
+                },
+                modal: {
+                    ondismiss: function () {
+                        // User closed the Razorpay modal without completing payment
+                        toast.info("Payment cancelled");
+                    },
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
         } catch (error) {
             console.error("Error creating booking:", error);
             toast.error("Failed to create booking");
+            // Reopen the modal if there was an error
+            setIsNewBookingDialogOpen(true);
         }
     };
 
@@ -450,6 +562,35 @@ const Bookings = () => {
             ...prev,
             travelers: prev.travelers.map((traveler, i) =>
                 i === index ? { ...traveler, [field]: value } : traveler
+            ),
+        }));
+    };
+
+    // Select existing traveler
+    const selectExistingTraveler = (travelerIndex, existingTraveler) => {
+        setNewBooking((prev) => ({
+            ...prev,
+            travelers: prev.travelers.map((traveler, i) =>
+                i === travelerIndex
+                    ? {
+                          name: existingTraveler.name,
+                          age: existingTraveler.age.toString(),
+                          gender: existingTraveler.gender,
+                          phone: existingTraveler.phone,
+                          email: existingTraveler.email || "",
+                          emergency_contact_name:
+                              existingTraveler.emergency_contact_name,
+                          emergency_contact_phone:
+                              existingTraveler.emergency_contact_phone,
+                          emergency_contact_relation:
+                              existingTraveler.emergency_contact_relation ||
+                              "Self",
+                          medical_conditions:
+                              existingTraveler.medical_conditions || "",
+                          dietary_restrictions:
+                              existingTraveler.dietary_restrictions || "",
+                      }
+                    : traveler
             ),
         }));
     };
@@ -526,7 +667,10 @@ const Bookings = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {analytics.totalBookings || bookings.length}
+                                {analytics.statusBreakdown?.reduce(
+                                    (sum, s) => sum + parseInt(s.count),
+                                    0
+                                ) || 0}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 All time bookings
@@ -542,10 +686,7 @@ const Bookings = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {analytics.confirmedBookings ||
-                                    bookings.filter(
-                                        (b) => b.status === "confirmed"
-                                    ).length}
+                                {analytics.revenue?.confirmedBookings || 0}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Active bookings
@@ -562,14 +703,9 @@ const Bookings = () => {
                         <CardContent>
                             <div className="text-2xl font-bold">
                                 ₹
-                                {analytics.totalRevenue ||
-                                    bookings
-                                        .reduce(
-                                            (sum, b) =>
-                                                sum + (b.final_amount || 0),
-                                            0
-                                        )
-                                        .toLocaleString()}
+                                {parseFloat(
+                                    analytics.revenue?.totalRevenue || 0
+                                ).toLocaleString()}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 From confirmed bookings
@@ -585,10 +721,9 @@ const Bookings = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {analytics.pendingBookings ||
-                                    bookings.filter(
-                                        (b) => b.status === "pending"
-                                    ).length}
+                                {analytics.statusBreakdown?.find(
+                                    (s) => s.status === "pending"
+                                )?.count || 0}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 Awaiting confirmation
@@ -883,9 +1018,12 @@ const Bookings = () => {
                 customers={customers}
                 treksLoading={treksLoading}
                 customersLoading={customersLoading}
+                existingTravelers={existingTravelers}
+                existingTravelersLoading={existingTravelersLoading}
                 addTraveler={addTraveler}
                 removeTraveler={removeTraveler}
                 updateTraveler={updateTraveler}
+                selectExistingTraveler={selectExistingTraveler}
             />
 
             {/* Update Status Dialog */}
@@ -1204,6 +1342,62 @@ const UpdateStatusDialog = ({ booking, isOpen, onOpenChange, onUpdate }) => {
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/* Payment Summary */}
+                    {formData.trekId && formData.travelers.length > 0 && (
+                        <div className="border-t pt-4">
+                            <h3 className="text-lg font-semibold mb-3">
+                                Payment Summary
+                            </h3>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span>Trek Price:</span>
+                                    <span>
+                                        ₹
+                                        {(() => {
+                                            const selectedTrek = treks.find(
+                                                (trek) =>
+                                                    trek.id === formData.trekId
+                                            );
+                                            return selectedTrek
+                                                ? selectedTrek.price ||
+                                                      selectedTrek.base_price ||
+                                                      0
+                                                : 0;
+                                        })()}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Number of Travelers:</span>
+                                    <span>{formData.travelers.length}</span>
+                                </div>
+                                <div className="border-t pt-2">
+                                    <div className="flex justify-between font-semibold text-lg">
+                                        <span>Total Amount:</span>
+                                        <span>
+                                            ₹
+                                            {(() => {
+                                                const selectedTrek = treks.find(
+                                                    (trek) =>
+                                                        trek.id ===
+                                                        formData.trekId
+                                                );
+                                                const basePrice = selectedTrek
+                                                    ? selectedTrek.price ||
+                                                      selectedTrek.base_price ||
+                                                      0
+                                                    : 0;
+                                                return (
+                                                    basePrice *
+                                                    formData.travelers.length
+                                                );
+                                            })()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button
@@ -1240,9 +1434,12 @@ const CreateBookingDialog = ({
     customers,
     treksLoading,
     customersLoading,
+    existingTravelers,
+    existingTravelersLoading,
     addTraveler,
     removeTraveler,
     updateTraveler,
+    selectExistingTraveler,
 }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -1421,6 +1618,22 @@ const CreateBookingDialog = ({
                             </Button>
                         </div>
 
+                        {existingTravelers.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-sm text-blue-700">
+                                    💡{" "}
+                                    <strong>{existingTravelers.length}</strong>{" "}
+                                    existing traveler
+                                    {existingTravelers.length > 1
+                                        ? "s"
+                                        : ""}{" "}
+                                    found for this customer. You can select from
+                                    the dropdown above each traveler form to
+                                    auto-fill their details.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             {formData.travelers.map((traveler, index) => (
                                 <div
@@ -1431,18 +1644,68 @@ const CreateBookingDialog = ({
                                         <h4 className="font-medium">
                                             Traveler {index + 1}
                                         </h4>
-                                        {formData.travelers.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                    removeTraveler(index)
-                                                }
-                                            >
-                                                Remove
-                                            </Button>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {existingTravelers.length > 0 && (
+                                                <Select
+                                                    onValueChange={(
+                                                        travelerId
+                                                    ) => {
+                                                        const selectedTraveler =
+                                                            existingTravelers.find(
+                                                                (t) =>
+                                                                    t.id.toString() ===
+                                                                    travelerId
+                                                            );
+                                                        if (selectedTraveler) {
+                                                            selectExistingTraveler(
+                                                                index,
+                                                                selectedTraveler
+                                                            );
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        existingTravelersLoading
+                                                    }
+                                                >
+                                                    <SelectTrigger className="w-48">
+                                                        <SelectValue placeholder="Select existing traveler" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {existingTravelers.map(
+                                                            (traveler) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        traveler.id
+                                                                    }
+                                                                    value={traveler.id.toString()}
+                                                                >
+                                                                    {
+                                                                        traveler.name
+                                                                    }{" "}
+                                                                    (
+                                                                    {
+                                                                        traveler.age
+                                                                    }{" "}
+                                                                    years)
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                            {formData.travelers.length > 1 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        removeTraveler(index)
+                                                    }
+                                                >
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1539,7 +1802,7 @@ const CreateBookingDialog = ({
                                         </div>
                                         <div className="space-y-2">
                                             <Label>
-                                                Emergency Contact Name *
+                                                Emergency Contact Name
                                             </Label>
                                             <Input
                                                 value={
@@ -1553,7 +1816,6 @@ const CreateBookingDialog = ({
                                                     )
                                                 }
                                                 placeholder="Emergency contact name"
-                                                required
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -1638,7 +1900,13 @@ const CreateBookingDialog = ({
                     >
                         Cancel
                     </Button>
-                    <Button onClick={onSubmit}>Create Booking</Button>
+                    <Button
+                        onClick={onSubmit}
+                        className="flex items-center gap-2"
+                    >
+                        <CreditCard className="h-4 w-4" />
+                        Pay & Create Booking
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

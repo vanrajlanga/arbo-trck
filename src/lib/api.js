@@ -300,6 +300,8 @@ export const apiVendor = {
         );
     },
     getCustomerById: (id) => apiCall(`/api/vendor/customers/${id}`),
+    getCustomerTravelers: (customerId) =>
+        apiCall(`/api/vendor/customers/${customerId}/travelers`),
     getCustomerAnalytics: (params = {}) => {
         const queryString = new URLSearchParams(params).toString();
         return apiCall(
@@ -404,6 +406,18 @@ export const apiVendor = {
         apiCall("/api/vendor/coupons/validate", {
             method: "POST",
             body: JSON.stringify(couponData),
+        }),
+
+    // Razorpay payment endpoints
+    createTrekOrder: (orderData) =>
+        apiCall("/api/vendor/bookings/create-trek-order", {
+            method: "POST",
+            body: JSON.stringify(orderData),
+        }),
+    verifyPayment: (paymentData) =>
+        apiCall("/api/vendor/bookings/verify-payment", {
+            method: "POST",
+            body: JSON.stringify(paymentData),
         }),
 };
 
@@ -741,6 +755,18 @@ export const apiV1 = {
         apiCall("/api/v1/coupons/validate", {
             method: "POST",
             body: JSON.stringify(couponData),
+        }),
+
+    // Mobile payment flow endpoints
+    createMobileTrekOrder: (orderData) =>
+        apiCall("/api/v1/bookings/create-trek-order", {
+            method: "POST",
+            body: JSON.stringify(orderData),
+        }),
+    verifyMobilePayment: (paymentData) =>
+        apiCall("/api/v1/bookings/verify-payment", {
+            method: "POST",
+            body: JSON.stringify(paymentData),
         }),
 };
 
