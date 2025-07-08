@@ -56,6 +56,37 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiVendor } from "@/lib/api";
 
+// Utility functions for status badges
+const getStatusBadgeColor = (status) => {
+    switch (status) {
+        case "confirmed":
+            return "bg-green-100 text-green-800";
+        case "pending":
+            return "bg-yellow-100 text-yellow-800";
+        case "cancelled":
+            return "bg-red-100 text-red-800";
+        case "completed":
+            return "bg-blue-100 text-blue-800";
+        default:
+            return "bg-gray-100 text-gray-800";
+    }
+};
+
+const getPaymentBadgeColor = (status) => {
+    switch (status) {
+        case "completed":
+            return "bg-green-100 text-green-800";
+        case "pending":
+            return "bg-yellow-100 text-yellow-800";
+        case "refunded":
+            return "bg-blue-100 text-blue-800";
+        case "failed":
+            return "bg-red-100 text-red-800";
+        default:
+            return "bg-gray-100 text-gray-800";
+    }
+};
+
 const Bookings = () => {
     const [bookings, setBookings] = useState([]);
     const [analytics, setAnalytics] = useState(null);
@@ -76,14 +107,18 @@ const Bookings = () => {
     const [newBooking, setNewBooking] = useState({
         trekId: 0,
         customerId: 0,
-        participants: [
+        travelers: [
             {
                 name: "",
                 age: "",
                 gender: "male",
                 phone: "",
-                emergencyContact: "",
-                medicalConditions: "",
+                email: "",
+                emergency_contact_name: "",
+                emergency_contact_phone: "",
+                emergency_contact_relation: "Self",
+                medical_conditions: "",
+                dietary_restrictions: "",
             },
         ],
         status: "confirmed",
@@ -211,7 +246,7 @@ const Bookings = () => {
             "Booking ID",
             "Trek",
             "Customer",
-            "Participants",
+            "Travelers",
             "Booking Date",
             "Trek Date",
             "Total Amount",
@@ -226,9 +261,7 @@ const Bookings = () => {
                     booking.id,
                     `"${booking.trek?.title || "N/A"}"`,
                     `"${booking.user?.name || "N/A"}"`,
-                    booking.total_participants ||
-                        booking.participants?.length ||
-                        0,
+                    booking.total_travelers || booking.travelers?.length || 0,
                     `"${format(
                         new Date(booking.booking_date || booking.created_at),
                         "yyyy-MM-dd"
@@ -295,7 +328,7 @@ const Bookings = () => {
         const { name, value } = e.target;
         setNewBooking({
             ...newBooking,
-            [name]: name === "participants" ? parseInt(value) : value,
+            [name]: name === "travelers" ? parseInt(value) : value,
         });
     };
 
@@ -305,18 +338,23 @@ const Bookings = () => {
         if (
             !newBooking.trekId ||
             !newBooking.customerId ||
-            newBooking.participants.length === 0
+            newBooking.travelers.length === 0
         ) {
             toast.error("Please fill all required fields");
             return;
         }
 
-        // Validate participants
-        for (let i = 0; i < newBooking.participants.length; i++) {
-            const participant = newBooking.participants[i];
-            if (!participant.name || !participant.age || !participant.phone) {
+        // Validate travelers
+        for (let i = 0; i < newBooking.travelers.length; i++) {
+            const traveler = newBooking.travelers[i];
+            if (
+                !traveler.name ||
+                !traveler.age ||
+                !traveler.phone ||
+                !traveler.emergency_contact_phone
+            ) {
                 toast.error(
-                    `Please fill all required fields for participant ${i + 1}`
+                    `Please fill all required fields for traveler ${i + 1}`
                 );
                 return;
             }
@@ -326,7 +364,7 @@ const Bookings = () => {
             const bookingData = {
                 trekId: newBooking.trekId,
                 customerId: newBooking.customerId,
-                participants: newBooking.participants,
+                travelers: newBooking.travelers,
                 status: newBooking.status,
                 paymentStatus: newBooking.paymentStatus,
                 specialRequests: newBooking.specialRequests,
@@ -342,14 +380,18 @@ const Bookings = () => {
                 setNewBooking({
                     trekId: 0,
                     customerId: 0,
-                    participants: [
+                    travelers: [
                         {
                             name: "",
                             age: "",
                             gender: "male",
                             phone: "",
-                            emergencyContact: "",
-                            medicalConditions: "",
+                            email: "",
+                            emergency_contact_name: "",
+                            emergency_contact_phone: "",
+                            emergency_contact_relation: "Self",
+                            medical_conditions: "",
+                            dietary_restrictions: "",
                         },
                     ],
                     status: "confirmed",
@@ -370,74 +412,46 @@ const Bookings = () => {
         }
     };
 
-    // Add participant
-    const addParticipant = () => {
+    // Add traveler
+    const addTraveler = () => {
         setNewBooking((prev) => ({
             ...prev,
-            participants: [
-                ...prev.participants,
+            travelers: [
+                ...prev.travelers,
                 {
                     name: "",
                     age: "",
                     gender: "male",
                     phone: "",
-                    emergencyContact: "",
-                    medicalConditions: "",
+                    email: "",
+                    emergency_contact_name: "",
+                    emergency_contact_phone: "",
+                    emergency_contact_relation: "Self",
+                    medical_conditions: "",
+                    dietary_restrictions: "",
                 },
             ],
         }));
     };
 
-    // Remove participant
-    const removeParticipant = (index) => {
-        if (newBooking.participants.length > 1) {
+    // Remove traveler
+    const removeTraveler = (index) => {
+        if (newBooking.travelers.length > 1) {
             setNewBooking((prev) => ({
                 ...prev,
-                participants: prev.participants.filter((_, i) => i !== index),
+                travelers: prev.travelers.filter((_, i) => i !== index),
             }));
         }
     };
 
-    // Update participant
-    const updateParticipant = (index, field, value) => {
+    // Update traveler
+    const updateTraveler = (index, field, value) => {
         setNewBooking((prev) => ({
             ...prev,
-            participants: prev.participants.map((participant, i) =>
-                i === index ? { ...participant, [field]: value } : participant
+            travelers: prev.travelers.map((traveler, i) =>
+                i === index ? { ...traveler, [field]: value } : traveler
             ),
         }));
-    };
-
-    // Get status badge color
-    const getStatusBadgeColor = (status) => {
-        switch (status) {
-            case "confirmed":
-                return "bg-green-100 text-green-800";
-            case "pending":
-                return "bg-yellow-100 text-yellow-800";
-            case "cancelled":
-                return "bg-red-100 text-red-800";
-            case "completed":
-                return "bg-blue-100 text-blue-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
-
-    // Get payment status badge color
-    const getPaymentBadgeColor = (status) => {
-        switch (status) {
-            case "completed":
-                return "bg-green-100 text-green-800";
-            case "pending":
-                return "bg-yellow-100 text-yellow-800";
-            case "refunded":
-                return "bg-blue-100 text-blue-800";
-            case "failed":
-                return "bg-red-100 text-red-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
     };
 
     // Filter bookings based on search term and status
@@ -642,7 +656,7 @@ const Bookings = () => {
                                         <TableHead>Booking ID</TableHead>
                                         <TableHead>Trek</TableHead>
                                         <TableHead>Customer</TableHead>
-                                        <TableHead>Participants</TableHead>
+                                        <TableHead>Travelers</TableHead>
                                         <TableHead>Booking Date</TableHead>
                                         <TableHead>Trek Date</TableHead>
                                         <TableHead>Amount</TableHead>
@@ -686,8 +700,8 @@ const Bookings = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary">
-                                                    {booking.total_participants ||
-                                                        booking.participants
+                                                    {booking.total_travelers ||
+                                                        booking.travelers
                                                             ?.length ||
                                                         0}{" "}
                                                     people
@@ -869,9 +883,9 @@ const Bookings = () => {
                 customers={customers}
                 treksLoading={treksLoading}
                 customersLoading={customersLoading}
-                addParticipant={addParticipant}
-                removeParticipant={removeParticipant}
-                updateParticipant={updateParticipant}
+                addTraveler={addTraveler}
+                removeTraveler={removeTraveler}
+                updateTraveler={updateTraveler}
             />
 
             {/* Update Status Dialog */}
@@ -1059,60 +1073,77 @@ const BookingDetailsDialog = ({ booking, isOpen, onOpenChange }) => {
                         </div>
                     </div>
 
-                    {/* Participants */}
-                    {booking.participants &&
-                        booking.participants.length > 0 && (
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold border-b pb-2">
-                                    Participants ({booking.participants.length})
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {booking.participants.map(
-                                        (participant, index) => (
-                                            <div
-                                                key={index}
-                                                className="border rounded-lg p-4"
-                                            >
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="font-medium">
-                                                        {participant.name}
-                                                    </div>
-                                                    <Badge variant="outline">
-                                                        {participant.age} years
+                    {/* Travelers */}
+                    {booking.travelers && booking.travelers.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold border-b pb-2">
+                                Travelers ({booking.travelers.length})
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {booking.travelers.map((traveler, index) => (
+                                    <div
+                                        key={index}
+                                        className="border rounded-lg p-4"
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-medium">
+                                                {traveler.name}
+                                                {traveler.is_primary && (
+                                                    <Badge
+                                                        variant="default"
+                                                        className="ml-2"
+                                                    >
+                                                        Primary
                                                     </Badge>
-                                                </div>
-                                                <div className="text-sm text-gray-500 space-y-1">
-                                                    <div>
-                                                        Gender:{" "}
-                                                        {participant.gender}
-                                                    </div>
-                                                    <div>
-                                                        Phone:{" "}
-                                                        {participant.phone}
-                                                    </div>
-                                                    {participant.emergency_contact && (
-                                                        <div>
-                                                            Emergency:{" "}
-                                                            {
-                                                                participant.emergency_contact
-                                                            }
-                                                        </div>
-                                                    )}
-                                                    {participant.medical_conditions && (
-                                                        <div>
-                                                            Medical:{" "}
-                                                            {
-                                                                participant.medical_conditions
-                                                            }
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                )}
                                             </div>
-                                        )
-                                    )}
-                                </div>
+                                            <Badge variant="outline">
+                                                {traveler.age} years
+                                            </Badge>
+                                        </div>
+                                        <div className="text-sm text-gray-500 space-y-1">
+                                            <div>Gender: {traveler.gender}</div>
+                                            <div>Phone: {traveler.phone}</div>
+                                            {traveler.email && (
+                                                <div>
+                                                    Email: {traveler.email}
+                                                </div>
+                                            )}
+                                            {traveler.emergency_contact_phone && (
+                                                <div>
+                                                    Emergency:{" "}
+                                                    {
+                                                        traveler.emergency_contact_name
+                                                    }{" "}
+                                                    (
+                                                    {
+                                                        traveler.emergency_contact_phone
+                                                    }
+                                                    )
+                                                </div>
+                                            )}
+                                            {traveler.medical_conditions && (
+                                                <div>
+                                                    Medical:{" "}
+                                                    {
+                                                        traveler.medical_conditions
+                                                    }
+                                                </div>
+                                            )}
+                                            {traveler.dietary_restrictions && (
+                                                <div>
+                                                    Dietary:{" "}
+                                                    {
+                                                        traveler.dietary_restrictions
+                                                    }
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        )}
+                        </div>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button
@@ -1209,9 +1240,9 @@ const CreateBookingDialog = ({
     customers,
     treksLoading,
     customersLoading,
-    addParticipant,
-    removeParticipant,
-    updateParticipant,
+    addTraveler,
+    removeTraveler,
+    updateTraveler,
 }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -1373,40 +1404,40 @@ const CreateBookingDialog = ({
                         </div>
                     </div>
 
-                    {/* Participants Section */}
+                    {/* Travelers Section */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-semibold">
-                                Participants ({formData.participants.length})
+                                Travelers ({formData.travelers.length})
                             </h3>
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={addParticipant}
+                                onClick={addTraveler}
                             >
                                 <Plus className="h-4 w-4 mr-2" />
-                                Add Participant
+                                Add Traveler
                             </Button>
                         </div>
 
                         <div className="space-y-4">
-                            {formData.participants.map((participant, index) => (
+                            {formData.travelers.map((traveler, index) => (
                                 <div
                                     key={index}
                                     className="border rounded-lg p-4 space-y-4"
                                 >
                                     <div className="flex justify-between items-center">
                                         <h4 className="font-medium">
-                                            Participant {index + 1}
+                                            Traveler {index + 1}
                                         </h4>
-                                        {formData.participants.length > 1 && (
+                                        {formData.travelers.length > 1 && (
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() =>
-                                                    removeParticipant(index)
+                                                    removeTraveler(index)
                                                 }
                                             >
                                                 Remove
@@ -1418,9 +1449,9 @@ const CreateBookingDialog = ({
                                         <div className="space-y-2">
                                             <Label>Name *</Label>
                                             <Input
-                                                value={participant.name}
+                                                value={traveler.name}
                                                 onChange={(e) =>
-                                                    updateParticipant(
+                                                    updateTraveler(
                                                         index,
                                                         "name",
                                                         e.target.value
@@ -1434,9 +1465,9 @@ const CreateBookingDialog = ({
                                             <Label>Age *</Label>
                                             <Input
                                                 type="number"
-                                                value={participant.age}
+                                                value={traveler.age}
                                                 onChange={(e) =>
-                                                    updateParticipant(
+                                                    updateTraveler(
                                                         index,
                                                         "age",
                                                         e.target.value
@@ -1451,9 +1482,9 @@ const CreateBookingDialog = ({
                                         <div className="space-y-2">
                                             <Label>Gender</Label>
                                             <Select
-                                                value={participant.gender}
+                                                value={traveler.gender}
                                                 onValueChange={(value) =>
-                                                    updateParticipant(
+                                                    updateTraveler(
                                                         index,
                                                         "gender",
                                                         value
@@ -1479,9 +1510,9 @@ const CreateBookingDialog = ({
                                         <div className="space-y-2">
                                             <Label>Phone *</Label>
                                             <Input
-                                                value={participant.phone}
+                                                value={traveler.phone}
                                                 onChange={(e) =>
-                                                    updateParticipant(
+                                                    updateTraveler(
                                                         index,
                                                         "phone",
                                                         e.target.value
@@ -1492,35 +1523,106 @@ const CreateBookingDialog = ({
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label>Emergency Contact</Label>
+                                            <Label>Email</Label>
+                                            <Input
+                                                value={traveler.email}
+                                                onChange={(e) =>
+                                                    updateTraveler(
+                                                        index,
+                                                        "email",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                placeholder="Email address"
+                                                type="email"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>
+                                                Emergency Contact Name *
+                                            </Label>
                                             <Input
                                                 value={
-                                                    participant.emergencyContact
+                                                    traveler.emergency_contact_name
                                                 }
                                                 onChange={(e) =>
-                                                    updateParticipant(
+                                                    updateTraveler(
                                                         index,
-                                                        "emergencyContact",
+                                                        "emergency_contact_name",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                placeholder="Emergency contact name"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>
+                                                Emergency Contact Phone *
+                                            </Label>
+                                            <Input
+                                                value={
+                                                    traveler.emergency_contact_phone
+                                                }
+                                                onChange={(e) =>
+                                                    updateTraveler(
+                                                        index,
+                                                        "emergency_contact_phone",
                                                         e.target.value
                                                     )
                                                 }
                                                 placeholder="Emergency contact number"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>
+                                                Emergency Contact Relation
+                                            </Label>
+                                            <Input
+                                                value={
+                                                    traveler.emergency_contact_relation
+                                                }
+                                                onChange={(e) =>
+                                                    updateTraveler(
+                                                        index,
+                                                        "emergency_contact_relation",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                placeholder="e.g., Spouse, Parent, Friend"
                                             />
                                         </div>
                                         <div className="space-y-2 md:col-span-2">
                                             <Label>Medical Conditions</Label>
                                             <Input
                                                 value={
-                                                    participant.medicalConditions
+                                                    traveler.medical_conditions
                                                 }
                                                 onChange={(e) =>
-                                                    updateParticipant(
+                                                    updateTraveler(
                                                         index,
-                                                        "medicalConditions",
+                                                        "medical_conditions",
                                                         e.target.value
                                                     )
                                                 }
                                                 placeholder="Any medical conditions or allergies..."
+                                            />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <Label>Dietary Restrictions</Label>
+                                            <Input
+                                                value={
+                                                    traveler.dietary_restrictions
+                                                }
+                                                onChange={(e) =>
+                                                    updateTraveler(
+                                                        index,
+                                                        "dietary_restrictions",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                placeholder="e.g., Vegetarian, Vegan, Gluten-free..."
                                             />
                                         </div>
                                     </div>

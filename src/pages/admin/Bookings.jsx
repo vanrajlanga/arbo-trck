@@ -81,7 +81,7 @@ const AdminBookings = () => {
                 trekDate: "2025-06-15",
                 amount: "₹15,000",
                 status: "confirmed",
-                participants: 3,
+                travelers: 3,
                 paymentMethod: "Credit Card",
             },
             {
@@ -105,7 +105,7 @@ const AdminBookings = () => {
                 trekDate: "2025-06-20",
                 amount: "₹9,000",
                 status: "pending",
-                participants: 2,
+                travelers: 2,
                 paymentMethod: "UPI",
             },
             {
@@ -129,7 +129,7 @@ const AdminBookings = () => {
                 trekDate: "2025-07-05",
                 amount: "₹10,000",
                 status: "confirmed",
-                participants: 2,
+                travelers: 2,
                 paymentMethod: "Net Banking",
             },
             {
@@ -153,7 +153,7 @@ const AdminBookings = () => {
                 trekDate: "2025-06-28",
                 amount: "₹12,500",
                 status: "cancelled",
-                participants: 2,
+                travelers: 2,
                 paymentMethod: "Debit Card",
                 notes: "Customer requested cancellation due to scheduling conflict.",
             },
@@ -178,7 +178,7 @@ const AdminBookings = () => {
                 trekDate: "2025-05-25",
                 amount: "₹13,500",
                 status: "completed",
-                participants: 3,
+                travelers: 3,
                 paymentMethod: "Credit Card",
             },
             {
@@ -202,7 +202,7 @@ const AdminBookings = () => {
                 trekDate: "2025-06-18",
                 amount: "₹8,000",
                 status: "refunded",
-                participants: 1,
+                travelers: 1,
                 paymentMethod: "UPI",
                 notes: "Refunded due to bad weather conditions",
             },
@@ -1469,11 +1469,11 @@ const AdminBookings = () => {
                                                                                                 className:
                                                                                                     "font-medium",
                                                                                                 children:
-                                                                                                    "Participants:",
+                                                                                                    "Travelers:",
                                                                                             }
                                                                                         ),
                                                                                         " ",
-                                                                                        selectedBooking.participants,
+                                                                                        selectedBooking.travelers,
                                                                                     ],
                                                                             }
                                                                         ),
