@@ -10,6 +10,7 @@ import {
     processBatches,
     processCancellationPolicy,
     processActivities,
+    getTrekImageUrl,
 } from "@/lib/trekUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -259,8 +260,19 @@ const EditTrek = () => {
                     // Map trek stages
                     setTrekStages(trekData.trekStages || []);
 
-                    // Map images
-                    setImages(trekData.images || []);
+                    // Map images - convert relative paths to full URLs
+                    console.log(
+                        "EditTrek - raw images from backend:",
+                        trekData.images
+                    );
+                    const processedImages = (trekData.images || []).map(
+                        (image) => getTrekImageUrl(image)
+                    );
+                    setImages(processedImages);
+                    console.log(
+                        "EditTrek - processed images set to:",
+                        processedImages
+                    );
 
                     // Map accommodations
                     console.log(
@@ -1390,25 +1402,25 @@ const EditTrek = () => {
                             {/* Dates Tab */}
                             <TabsContent value="dates" className="space-y-4">
                                 <div className="space-y-4">
-                                    {batches.map((range, idx) => (
+                                    {batches.map((batch, idx) => (
                                         <div
                                             key={idx}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end"
+                                            className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
                                         >
                                             <div>
                                                 <Label>Start Date *</Label>
                                                 <Input
                                                     type="date"
-                                                    value={range.startDate}
+                                                    value={batch.startDate}
                                                     onChange={(e) => {
-                                                        const newDates = [
+                                                        const newBatches = [
                                                             ...batches,
                                                         ];
-                                                        newDates[
+                                                        newBatches[
                                                             idx
                                                         ].startDate =
                                                             e.target.value;
-                                                        setBatches(newDates);
+                                                        setBatches(newBatches);
                                                     }}
                                                     required
                                                 />
@@ -1417,15 +1429,38 @@ const EditTrek = () => {
                                                 <Label>End Date</Label>
                                                 <Input
                                                     type="date"
-                                                    value={range.endDate}
+                                                    value={batch.endDate}
                                                     onChange={(e) => {
-                                                        const newDates = [
+                                                        const newBatches = [
                                                             ...batches,
                                                         ];
-                                                        newDates[idx].endDate =
+                                                        newBatches[
+                                                            idx
+                                                        ].endDate =
                                                             e.target.value;
-                                                        setBatches(newDates);
+                                                        setBatches(newBatches);
                                                     }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>Capacity</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={batch.capacity}
+                                                    onChange={(e) => {
+                                                        const newBatches = [
+                                                            ...batches,
+                                                        ];
+                                                        newBatches[
+                                                            idx
+                                                        ].capacity =
+                                                            parseInt(
+                                                                e.target.value
+                                                            ) || 20;
+                                                        setBatches(newBatches);
+                                                    }}
+                                                    min="1"
+                                                    max="100"
                                                 />
                                             </div>
                                             <div className="flex gap-2">
@@ -1465,7 +1500,7 @@ const EditTrek = () => {
                                                         }
                                                     >
                                                         <Plus className="w-4 h-4 mr-1" />
-                                                        Add Date Range
+                                                        Add Batch
                                                     </Button>
                                                 )}
                                             </div>

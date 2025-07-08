@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { apiVendor } from "@/lib/api";
+import { getTrekImageUrl } from "@/lib/trekUtils";
 
 const Treks = () => {
     const navigate = useNavigate();
@@ -64,6 +65,7 @@ const Treks = () => {
             setLoading(true);
             const response = await apiVendor.getTreks();
             console.log("Raw trek data from backend:", response.data[0]); // Debug log
+            console.log("Images in first trek:", response.data[0]?.images); // Debug images
             setTreks(response.data);
         } catch (error) {
             console.error("Error loading treks:", error);
@@ -153,14 +155,7 @@ const Treks = () => {
 
     // Get a placeholder image for treks
     const getTrekImage = (imageName) => {
-        if (
-            imageName &&
-            typeof imageName === "string" &&
-            imageName.startsWith("http")
-        ) {
-            return imageName;
-        }
-        return "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=500&auto=format&fit=crop";
+        return getTrekImageUrl(imageName);
     };
 
     return (

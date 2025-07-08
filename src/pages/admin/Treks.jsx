@@ -27,6 +27,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { getTrekImageUrl } from "@/lib/trekUtils";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 const AdminTreks = () => {
     const [treks, setTreks] = useState([]);
@@ -115,7 +116,7 @@ const AdminTreks = () => {
 
     // Get a placeholder image for treks
     const getTrekImage = (imageName) => {
-        return "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=500&auto=format&fit=crop";
+        return getTrekImageUrl(imageName);
     };
     return /*#__PURE__*/ _jsxs("div", {
         children: [

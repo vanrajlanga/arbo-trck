@@ -55,7 +55,9 @@ const ManageLocations = () => {
     // Group cities by state for display
     const statesWithCities = states.map((state) => ({
         ...state,
-        cities: cities.filter((city) => city.stateId === state.id),
+        cities: (Array.isArray(cities) ? cities : []).filter(
+            (city) => city.stateId === state.id
+        ),
     }));
 
     // Filter states based on search
@@ -79,7 +81,7 @@ const ManageLocations = () => {
             ]);
 
             if (citiesResponse.success) {
-                setCities(citiesResponse.data || []);
+                setCities(citiesResponse.data?.cities || []);
             }
             if (statesResponse.success) {
                 setStates(statesResponse.data || []);
@@ -156,7 +158,7 @@ const ManageLocations = () => {
         }
 
         // Check if city already exists in the state
-        const existingCity = cities.find(
+        const existingCity = (Array.isArray(cities) ? cities : []).find(
             (city) =>
                 city.cityName.toLowerCase() === newCity.toLowerCase() &&
                 city.stateId === parseInt(selectedState)
@@ -456,7 +458,10 @@ const ManageLocations = () => {
                                 </p>
                                 <p className="text-2xl font-bold">
                                     {
-                                        cities.filter((city) => city.isPopular)
+                                        (Array.isArray(cities)
+                                            ? cities
+                                            : []
+                                        ).filter((city) => city.isPopular)
                                             .length
                                     }
                                 </p>

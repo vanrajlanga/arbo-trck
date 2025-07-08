@@ -3,6 +3,51 @@
  */
 
 /**
+ * Get the proper image URL for trek images
+ * @param {string} imageName - Image name or path
+ * @returns {string} Full image URL
+ */
+export const getTrekImageUrl = (imageName) => {
+    console.log("getTrekImageUrl - input:", imageName);
+
+    if (!imageName || typeof imageName !== "string") {
+        console.log("getTrekImageUrl - no image name, returning placeholder");
+        return "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=500&auto=format&fit=crop";
+    }
+
+    // If it's already a full URL, return as is
+    if (imageName.startsWith("http://") || imageName.startsWith("https://")) {
+        console.log("getTrekImageUrl - full URL detected, returning as is");
+        return imageName;
+    }
+
+    // If it's a relative path, prefix with backend URL
+    if (imageName.startsWith("/storage/") || imageName.startsWith("storage/")) {
+        const backendUrl =
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+        const result = `${backendUrl}/${imageName.replace(/^\/+/, "")}`;
+        console.log(
+            "getTrekImageUrl - relative path detected, returning:",
+            result
+        );
+        return result;
+    }
+
+    // If it's just a filename, assume it's in the storage directory
+    if (!imageName.includes("/")) {
+        const backendUrl =
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+        const result = `${backendUrl}/storage/trek-images/${imageName}`;
+        console.log("getTrekImageUrl - filename detected, returning:", result);
+        return result;
+    }
+
+    // Default fallback
+    console.log("getTrekImageUrl - fallback to placeholder");
+    return "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=500&auto=format&fit=crop";
+};
+
+/**
  * Format trek data for API submission
  * @param {Object} trekData - Raw trek form data
  * @param {Array} inclusions - Inclusions array
