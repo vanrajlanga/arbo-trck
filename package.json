@@ -6,7 +6,12 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
+        "build:admin": "vite build --config vite.config.admin.js",
+        "build:vendor": "vite build --config vite.config.vendor.js",
         "build:dev": "vite build --mode development",
+        "preview:admin": "vite preview --config vite.config.admin.js",
+        "preview:vendor": "vite preview --config vite.config.vendor.js",
+        "build:all": "node scripts/build-all.js",
         "lint": "eslint .",
         "preview": "vite preview"
     },

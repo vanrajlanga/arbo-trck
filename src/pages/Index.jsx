@@ -1,11 +1,20 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Award, CheckCircle, ChevronRight, Calendar, BarChart } from "lucide-react";
+import { getBuildConfig, getAppTitle, getAppDescription } from "@/lib/buildConfig";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 const Index = () => {
-  const {
-    user
-  } = useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const buildConfig = getBuildConfig();
+  
+  // Auto-redirect based on build type if user is not authenticated
+  useEffect(() => {
+    if (!user && (buildConfig.isAdminBuild || buildConfig.isVendorBuild)) {
+      navigate(buildConfig.defaultLogin, { replace: true });
+    }
+  }, [user, buildConfig, navigate]);
   return /*#__PURE__*/_jsxs("div", {
     className: "min-h-screen flex flex-col",
     children: [/*#__PURE__*/_jsx("header", {
@@ -22,24 +31,32 @@ const Index = () => {
             })
           }), /*#__PURE__*/_jsx("span", {
             className: "text-white text-xl font-bold",
-            children: "Aorbo Treks"
+            children: getAppTitle()
           })]
         }), /*#__PURE__*/_jsx("nav", {
           children: user ? /*#__PURE__*/_jsx(Link, {
             to: user.role === "admin" ? "/admin" : "/vendor",
             className: "bg-white text-aorbo-teal px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors",
             children: "Dashboard"
-          }) : /*#__PURE__*/_jsxs("div", {
+          }) : buildConfig.isDefaultBuild ? /*#__PURE__*/_jsxs("div", {
             className: "space-x-4",
             children: [/*#__PURE__*/_jsx(Link, {
-              to: "/login",
+              to: "/admin/login",
               className: "text-white hover:text-gray-200 transition-colors",
-              children: "Login"
+              children: "Admin"
+            }), /*#__PURE__*/_jsx(Link, {
+              to: "/vendor/login",
+              className: "text-white hover:text-gray-200 transition-colors",
+              children: "Vendor"
             }), /*#__PURE__*/_jsx(Link, {
               to: "/register",
               className: "bg-white text-aorbo-teal px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors",
               children: "Register"
             })]
+          }) : /*#__PURE__*/_jsx(Link, {
+            to: buildConfig.defaultLogin,
+            className: "bg-white text-aorbo-teal px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors",
+            children: "Login"
           })
         })]
       })
@@ -51,11 +68,15 @@ const Index = () => {
           className: "space-y-6 animate-fade-in",
           children: [/*#__PURE__*/_jsx("h1", {
             className: "text-4xl md:text-5xl font-bold leading-tight",
-            children: "Ignite travel dreams and bring adventure to life for countless explorers!"
+            children: buildConfig.isAdminBuild 
+              ? "Administrative Portal - Manage Aorbo Platform"
+              : buildConfig.isVendorBuild
+              ? "Vendor Portal - Manage Your Treks"
+              : "Ignite travel dreams and bring adventure to life for countless explorers!"
           }), /*#__PURE__*/_jsx("p", {
             className: "text-lg md:text-xl opacity-90",
-            children: "Join Aorbo, The India's Trek Ticket Booking Platform, and unlock exclusive benefits, tools, and growth opportunities."
-          }), /*#__PURE__*/_jsx("div", {
+            children: getAppDescription()
+          }), buildConfig.isDefaultBuild && /*#__PURE__*/_jsx("div", {
             children: /*#__PURE__*/_jsxs(Link, {
               to: "/register",
               className: "inline-flex items-center bg-aorbo-yellow text-black px-6 py-3 rounded-md font-medium hover:bg-opacity-90 transition-colors",

@@ -5,6 +5,8 @@ import Protected from "./components/auth/Protected";
 import AuthRedirect from "./components/auth/AuthRedirect";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
+import AdminLogin from "./pages/auth/AdminLogin";
+import VendorLogin from "./pages/auth/VendorLogin";
 import Register from "./pages/auth/Register";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminVendors from "./pages/admin/Vendors";
@@ -108,6 +110,18 @@ function App() {
                                     path: "/login",
                                     element: /*#__PURE__*/ _jsx(AuthRedirect, {
                                         children: /*#__PURE__*/ _jsx(Login, {}),
+                                    }),
+                                }),
+                                /*#__PURE__*/ _jsx(Route, {
+                                    path: "/admin/login",
+                                    element: /*#__PURE__*/ _jsx(AuthRedirect, {
+                                        children: /*#__PURE__*/ _jsx(AdminLogin, {}),
+                                    }),
+                                }),
+                                /*#__PURE__*/ _jsx(Route, {
+                                    path: "/vendor/login",
+                                    element: /*#__PURE__*/ _jsx(AuthRedirect, {
+                                        children: /*#__PURE__*/ _jsx(VendorLogin, {}),
                                     }),
                                 }),
                                 /*#__PURE__*/ _jsx(Route, {

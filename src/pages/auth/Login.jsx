@@ -1,18 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login, user, isLoading } = useAuth();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { user, isLoading } = useAuth();
 
     // Redirect if user is already authenticated
     useEffect(() => {
@@ -47,37 +41,7 @@ const Login = () => {
         return null;
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!email || !password) {
-            toast.error("Please fill in all fields");
-            return;
-        }
-        try {
-            setIsSubmitting(true);
-            await login(email, password);
-            toast.success("Login successful");
 
-            // Redirect based on user role
-            const storedUser = localStorage.getItem("aorboUser");
-            if (storedUser) {
-                const user = JSON.parse(storedUser);
-                if (user.role === "admin") {
-                    navigate("/admin");
-                } else if (user.role === "vendor") {
-                    navigate("/vendor");
-                } else {
-                    navigate("/");
-                }
-            } else {
-                navigate("/");
-            }
-        } catch (error) {
-            toast.error(error.message || "Failed to login");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     return /*#__PURE__*/ _jsxs("div", {
         className: "min-h-screen bg-gray-50 flex",
@@ -118,14 +82,13 @@ const Login = () => {
                             /*#__PURE__*/ _jsx("h2", {
                                 className:
                                     "mt-6 text-3xl font-bold text-center text-gray-900",
-                                children: "Sign in to your account",
+                                children: "Choose your login type",
                             }),
                             /*#__PURE__*/ _jsxs("p", {
                                 className:
                                     "mt-2 text-sm text-center text-gray-600",
                                 children: [
-                                    "Or",
-                                    " ",
+                                    "Select your portal type or ",
                                     /*#__PURE__*/ _jsx(Link, {
                                         to: "/register",
                                         className:
@@ -142,136 +105,44 @@ const Login = () => {
                             className:
                                 "bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10",
                             children: [
-                                /*#__PURE__*/ _jsxs("form", {
+                                /*#__PURE__*/ _jsxs("div", {
                                     className: "space-y-6",
-                                    onSubmit: handleSubmit,
                                     children: [
                                         /*#__PURE__*/ _jsxs("div", {
                                             children: [
-                                                /*#__PURE__*/ _jsx("label", {
-                                                    htmlFor: "email",
-                                                    className:
-                                                        "block text-sm font-medium text-gray-700",
-                                                    children: "Email address",
-                                                }),
-                                                /*#__PURE__*/ _jsx("div", {
-                                                    className: "mt-1",
-                                                    children:
-                                                        /*#__PURE__*/ _jsx(
-                                                            Input,
-                                                            {
-                                                                id: "email",
-                                                                name: "email",
-                                                                type: "email",
-                                                                autoComplete:
-                                                                    "email",
-                                                                required: true,
-                                                                value: email,
-                                                                onChange: (e) =>
-                                                                    setEmail(
-                                                                        e.target
-                                                                            .value
-                                                                    ),
-                                                                className:
-                                                                    "block w-full",
-                                                            }
-                                                        ),
-                                                }),
-                                            ],
-                                        }),
-                                        /*#__PURE__*/ _jsxs("div", {
-                                            children: [
-                                                /*#__PURE__*/ _jsx("label", {
-                                                    htmlFor: "password",
-                                                    className:
-                                                        "block text-sm font-medium text-gray-700",
-                                                    children: "Password",
-                                                }),
-                                                /*#__PURE__*/ _jsx("div", {
-                                                    className: "mt-1",
-                                                    children:
-                                                        /*#__PURE__*/ _jsx(
-                                                            Input,
-                                                            {
-                                                                id: "password",
-                                                                name: "password",
-                                                                type: "password",
-                                                                autoComplete:
-                                                                    "current-password",
-                                                                required: true,
-                                                                value: password,
-                                                                onChange: (e) =>
-                                                                    setPassword(
-                                                                        e.target
-                                                                            .value
-                                                                    ),
-                                                                className:
-                                                                    "block w-full",
-                                                            }
-                                                        ),
-                                                }),
-                                            ],
-                                        }),
-                                        /*#__PURE__*/ _jsxs("div", {
-                                            className:
-                                                "flex items-center justify-between",
-                                            children: [
-                                                /*#__PURE__*/ _jsxs("div", {
-                                                    className:
-                                                        "flex items-center",
+                                                /*#__PURE__*/ _jsx(Link, {
+                                                    to: "/admin/login",
+                                                    className: "w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-md font-medium flex items-center justify-center transition-colors",
                                                     children: [
-                                                        /*#__PURE__*/ _jsx(
-                                                            "input",
-                                                            {
-                                                                id: "remember-me",
-                                                                name: "remember-me",
-                                                                type: "checkbox",
-                                                                className:
-                                                                    "h-4 w-4 rounded border-gray-300 text-aorbo-teal focus:ring-aorbo-teal",
-                                                            }
-                                                        ),
-                                                        /*#__PURE__*/ _jsx(
-                                                            "label",
-                                                            {
-                                                                htmlFor:
-                                                                    "remember-me",
-                                                                className:
-                                                                    "ml-2 block text-sm text-gray-900",
-                                                                children:
-                                                                    "Remember me",
-                                                            }
-                                                        ),
-                                                    ],
-                                                }),
-                                                /*#__PURE__*/ _jsx("div", {
-                                                    className: "text-sm",
-                                                    children:
-                                                        /*#__PURE__*/ _jsx(
-                                                            "a",
-                                                            {
-                                                                href: "#",
-                                                                className:
-                                                                    "font-medium text-aorbo-teal hover:text-aorbo-teal/90",
-                                                                children:
-                                                                    "Forgot your password?",
-                                                            }
-                                                        ),
-                                                }),
+                                                        /*#__PURE__*/ _jsx("div", {
+                                                            className: "w-6 h-6 rounded-full bg-white flex items-center justify-center mr-3",
+                                                            children: /*#__PURE__*/ _jsx("span", {
+                                                                className: "text-red-600 font-bold text-sm",
+                                                                children: "A"
+                                                            })
+                                                        }),
+                                                        "Admin Login"
+                                                    ]
+                                                })
                                             ],
                                         }),
-                                        /*#__PURE__*/ _jsx("div", {
-                                            children: /*#__PURE__*/ _jsx(
-                                                Button,
-                                                {
-                                                    type: "submit",
-                                                    className:
-                                                        "w-full bg-aorbo-teal hover:bg-aorbo-teal/90",
-                                                    disabled: isSubmitting,
-                                                    children: isSubmitting
-                                                        ? "Signing in..."
-                                                        : "Sign in",
-                                                }
-                                            ),
+                                        /*#__PURE__*/ _jsxs("div", {
+                                            children: [
+                                                /*#__PURE__*/ _jsx(Link, {
+                                                    to: "/vendor/login",
+                                                    className: "w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-md font-medium flex items-center justify-center transition-colors",
+                                                    children: [
+                                                        /*#__PURE__*/ _jsx("div", {
+                                                            className: "w-6 h-6 rounded-full bg-white flex items-center justify-center mr-3",
+                                                            children: /*#__PURE__*/ _jsx("span", {
+                                                                className: "text-green-600 font-bold text-sm",
+                                                                children: "V"
+                                                            })
+                                                        }),
+                                                        "Vendor Login"
+                                                    ]
+                                                })
+                                            ],
                                         }),
                                     ],
                                 }),
@@ -311,41 +182,14 @@ const Login = () => {
                                         }),
                                         /*#__PURE__*/ _jsx("div", {
                                             className:
-                                                "mt-6 grid grid-cols-1 gap-3",
-                                            children: /*#__PURE__*/ _jsxs(
-                                                "div",
+                                                "mt-6 text-center",
+                                            children: /*#__PURE__*/ _jsx(
+                                                "p",
                                                 {
                                                     className:
-                                                        "text-sm text-center",
-                                                    children: [
-                                                        /*#__PURE__*/ _jsx(
-                                                            "p",
-                                                            {
-                                                                className:
-                                                                    "text-gray-500 mb-2",
-                                                                children:
-                                                                    "You can use these demo accounts:",
-                                                            }
-                                                        ),
-                                                        /*#__PURE__*/ _jsx(
-                                                            "p",
-                                                            {
-                                                                className:
-                                                                    "font-medium",
-                                                                children:
-                                                                    "Admin: admin@aorbo.com / password",
-                                                            }
-                                                        ),
-                                                        /*#__PURE__*/ _jsx(
-                                                            "p",
-                                                            {
-                                                                className:
-                                                                    "font-medium",
-                                                                children:
-                                                                    "Vendor: vendor@aorbo.com / password",
-                                                            }
-                                                        ),
-                                                    ],
+                                                        "text-sm text-gray-500",
+                                                    children:
+                                                        "Choose your login type above to access the respective portal",
                                                 }
                                             ),
                                         }),

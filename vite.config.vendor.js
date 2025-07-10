@@ -23,7 +23,18 @@ export default defineConfig({
         include: ["react", "react-dom"],
     },
     define: {
-        'process.env.APP_TYPE': '"default"',
-        'process.env.DEFAULT_LOGIN': '"/login"',
+        'process.env.APP_TYPE': '"vendor"',
+        'process.env.DEFAULT_LOGIN': '"/vendor/login"',
     },
-});
+    build: {
+        outDir: 'dist-vendor',
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['react', 'react-dom'],
+                    ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+                },
+            },
+        },
+    },
+}); 
