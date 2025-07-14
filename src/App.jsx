@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./lib/clear-storage.js";
 import { AuthProvider } from "./contexts/AuthContext";
 import Protected from "./components/auth/Protected";
 import AuthRedirect from "./components/auth/AuthRedirect";
@@ -8,6 +9,7 @@ import Login from "./pages/auth/Login";
 import AdminLogin from "./pages/auth/AdminLogin";
 import VendorLogin from "./pages/auth/VendorLogin";
 import Register from "./pages/auth/Register";
+import AdminLoginDebug from "./components/debug/AdminLoginDebug";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminVendors from "./pages/admin/Vendors";
 import AdminTreks from "./pages/admin/Treks";
@@ -37,6 +39,8 @@ import AdminWithdrawals from "@/pages/admin/Withdrawals";
 import AdminCoupons from "@/pages/admin/Coupons";
 import VendorCoupons from "@/pages/vendor/Coupons";
 import Destinations from "@/pages/vendor/Destinations";
+import AdminActivities from "@/pages/admin/Activities";
+import AdminCancellationPolicies from "@/pages/admin/CancellationPolicies";
 
 // Import new admin pages
 import AdminUsers from "./pages/admin/Users";
@@ -115,13 +119,19 @@ function App() {
                                 /*#__PURE__*/ _jsx(Route, {
                                     path: "/admin/login",
                                     element: /*#__PURE__*/ _jsx(AuthRedirect, {
-                                        children: /*#__PURE__*/ _jsx(AdminLogin, {}),
+                                        children: /*#__PURE__*/ _jsx(
+                                            AdminLogin,
+                                            {}
+                                        ),
                                     }),
                                 }),
                                 /*#__PURE__*/ _jsx(Route, {
                                     path: "/vendor/login",
                                     element: /*#__PURE__*/ _jsx(AuthRedirect, {
-                                        children: /*#__PURE__*/ _jsx(VendorLogin, {}),
+                                        children: /*#__PURE__*/ _jsx(
+                                            VendorLogin,
+                                            {}
+                                        ),
                                     }),
                                 }),
                                 /*#__PURE__*/ _jsx(Route, {
@@ -132,6 +142,13 @@ function App() {
                                             {}
                                         ),
                                     }),
+                                }),
+                                /*#__PURE__*/ _jsx(Route, {
+                                    path: "/debug/admin-login",
+                                    element: /*#__PURE__*/ _jsx(
+                                        AdminLoginDebug,
+                                        {}
+                                    ),
                                 }),
                                 /*#__PURE__*/ _jsx(Route, {
                                     path: "/registration-flow",
@@ -244,6 +261,20 @@ function App() {
                                             path: "treks/batches",
                                             element: /*#__PURE__*/ _jsx(
                                                 AdminTrekBatches,
+                                                {}
+                                            ),
+                                        }),
+                                        /*#__PURE__*/ _jsx(Route, {
+                                            path: "activities",
+                                            element: /*#__PURE__*/ _jsx(
+                                                AdminActivities,
+                                                {}
+                                            ),
+                                        }),
+                                        /*#__PURE__*/ _jsx(Route, {
+                                            path: "cancellation-policies",
+                                            element: /*#__PURE__*/ _jsx(
+                                                AdminCancellationPolicies,
                                                 {}
                                             ),
                                         }),

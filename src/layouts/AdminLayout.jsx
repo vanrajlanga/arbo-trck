@@ -21,6 +21,8 @@ import {
     Server,
     ChevronDown,
     ChevronRight,
+    Activity,
+    FileX,
 } from "lucide-react";
 import {
     Collapsible,
@@ -119,6 +121,20 @@ const AdminLayout = () => {
                     path: "/admin/treks/batches",
                 },
             ],
+        },
+        {
+            id: "activities",
+            title: "Activities Management",
+            icon: Activity,
+            path: "/admin/activities",
+            subItems: [],
+        },
+        {
+            id: "cancellation-policies",
+            title: "Cancellation Policies",
+            icon: FileX,
+            path: "/admin/cancellation-policies",
+            subItems: [],
         },
         {
             id: "bookings",

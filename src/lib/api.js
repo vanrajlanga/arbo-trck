@@ -14,7 +14,7 @@ export const apiCall = async (endpoint, options = {}) => {
 
     // Add authorization header if token exists
     const token = localStorage.getItem("aorboToken");
-    if (token) {
+    if (token && token !== "null" && token !== "undefined") {
         defaultOptions.headers["Authorization"] = `Bearer ${token}`;
     }
 
@@ -46,6 +46,28 @@ export const apiCall = async (endpoint, options = {}) => {
 
 // Admin API methods (for admin panel)
 export const apiAdmin = {
+    // Generic HTTP methods
+    get: (endpoint) => apiCall(endpoint),
+    post: (endpoint, data) =>
+        apiCall(endpoint, {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+    put: (endpoint, data) =>
+        apiCall(endpoint, {
+            method: "PUT",
+            body: JSON.stringify(data),
+        }),
+    delete: (endpoint) =>
+        apiCall(endpoint, {
+            method: "DELETE",
+        }),
+    patch: (endpoint, data) =>
+        apiCall(endpoint, {
+            method: "PATCH",
+            body: JSON.stringify(data),
+        }),
+
     // Auth endpoints
     login: (email, password) =>
         apiCall("/api/admin/auth/login", {
@@ -222,6 +244,28 @@ export const apiAdmin = {
 
 // Vendor API methods (for vendor panel)
 export const apiVendor = {
+    // Generic HTTP methods
+    get: (endpoint) => apiCall(endpoint),
+    post: (endpoint, data) =>
+        apiCall(endpoint, {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+    put: (endpoint, data) =>
+        apiCall(endpoint, {
+            method: "PUT",
+            body: JSON.stringify(data),
+        }),
+    delete: (endpoint) =>
+        apiCall(endpoint, {
+            method: "DELETE",
+        }),
+    patch: (endpoint, data) =>
+        apiCall(endpoint, {
+            method: "PATCH",
+            body: JSON.stringify(data),
+        }),
+
     // Auth endpoints
     login: (email, password) =>
         apiCall("/api/vendor/auth/login", {

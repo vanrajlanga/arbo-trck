@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { api, apiAdmin, apiVendor } from "@/lib/api";
+import { safeStorage } from "@/lib/storage";
 
 const AuthContext = createContext(undefined);
 
@@ -9,8 +10,8 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Check if user is already logged in
-        const storedUser = localStorage.getItem("aorboUser");
-        const storedToken = localStorage.getItem("aorboToken");
+        const storedUser = safeStorage.getJSON("aorboUser");
+        const storedToken = safeStorage.getItem("aorboToken");
 
         console.log("AuthContext: Checking stored auth data", {
             hasUser: !!storedUser,
@@ -18,28 +19,63 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (storedUser && storedToken) {
-            const userData = JSON.parse(storedUser);
-            console.log("AuthContext: Setting user from storage", userData);
-            setUser(userData);
+            console.log("AuthContext: Setting user from storage", storedUser);
+            setUser(storedUser);
         }
         setIsLoading(false);
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (email, password, loginType = "general") => {
         setIsLoading(true);
         try {
-            console.log("AuthContext: Attempting login for", email);
+            console.log(
+                "AuthContext: Attempting login for",
+                email,
+                "type:",
+                loginType
+            );
 
-            // Try to determine if this is an admin or vendor login
-            // For now, we'll use the legacy api.login which handles both
-            // In the future, you might want to add role-specific login endpoints
-            const data = await api.login(email, password);
-            const { user, token } = data;
+            let data;
 
-            console.log("AuthContext: Login successful", user);
-            setUser(user);
-            localStorage.setItem("aorboUser", JSON.stringify(user));
-            localStorage.setItem("aorboToken", token);
+            // Use appropriate API based on login type
+            if (loginType === "vendor") {
+                data = await apiVendor.login(email, password);
+                // Vendor API returns { token, vendor } structure
+                const { token, vendor } = data.data || data;
+                const userData = {
+                    id: vendor.user_id,
+                    email: vendor.email,
+                    name: vendor.name,
+                    role: "vendor",
+                    vendorId: vendor.id,
+                    company_info: vendor.company_info,
+                    status: vendor.status,
+                };
+                setUser(userData);
+                if (userData && token) {
+                    safeStorage.setJSON("aorboUser", userData);
+                    safeStorage.setItem("aorboToken", token);
+                }
+            } else if (loginType === "admin") {
+                data = await apiAdmin.login(email, password);
+                const { token, user } = data.data;
+                setUser(user);
+                if (user && token) {
+                    safeStorage.setJSON("aorboUser", user);
+                    safeStorage.setItem("aorboToken", token);
+                }
+            } else {
+                // Fallback to legacy API for general login
+                data = await api.login(email, password);
+                const { user, token } = data.data || data;
+                setUser(user);
+                if (user && token) {
+                    safeStorage.setJSON("aorboUser", user);
+                    safeStorage.setItem("aorboToken", token);
+                }
+            }
+
+            console.log("AuthContext: Login successful", data);
         } catch (err) {
             console.error("AuthContext: Login failed", err);
             throw err;
@@ -53,12 +89,14 @@ export const AuthProvider = ({ children }) => {
         try {
             console.log("AuthContext: Attempting registration for", email);
             const data = await api.register(name, email, phone, password);
-            const { user, token } = data;
+            const { user, token } = data.data || data;
 
             console.log("AuthContext: Registration successful", user);
             setUser(user);
-            localStorage.setItem("aorboUser", JSON.stringify(user));
-            localStorage.setItem("aorboToken", token);
+            if (user && token) {
+                safeStorage.setJSON("aorboUser", user);
+                safeStorage.setItem("aorboToken", token);
+            }
         } catch (err) {
             console.error("AuthContext: Registration failed", err);
             throw err;
@@ -70,8 +108,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         console.log("AuthContext: Logging out");
         setUser(null);
-        localStorage.removeItem("aorboUser");
-        localStorage.removeItem("aorboToken");
+        safeStorage.clearAuth();
     };
 
     const value = {

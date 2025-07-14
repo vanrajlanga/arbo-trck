@@ -53,7 +53,7 @@ const VendorLogin = () => {
         }
         try {
             setIsSubmitting(true);
-            await login(email, password);
+            await login(email, password, "vendor");
             toast.success("Vendor login successful");
 
             // Redirect based on user role
@@ -121,7 +121,9 @@ const VendorLogin = () => {
                                         autoComplete="email"
                                         required
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         className="block w-full bg-green-700 border-green-600 text-white placeholder-green-300 focus:ring-green-500 focus:border-green-500"
                                         placeholder="vendor@aorbo.com"
                                     />
@@ -142,7 +144,9 @@ const VendorLogin = () => {
                                         autoComplete="current-password"
                                         required
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(e) =>
+                                            setPassword(e.target.value)
+                                        }
                                         className="block w-full bg-green-700 border-green-600 text-white placeholder-green-300 focus:ring-green-500 focus:border-green-500"
                                         placeholder="••••••••"
                                     />
@@ -226,4 +230,4 @@ const VendorLogin = () => {
     );
 };
 
-export default VendorLogin; 
+export default VendorLogin;

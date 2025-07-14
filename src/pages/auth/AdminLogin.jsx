@@ -53,7 +53,7 @@ const AdminLogin = () => {
         }
         try {
             setIsSubmitting(true);
-            await login(email, password);
+            await login(email, password, "admin");
             toast.success("Admin login successful");
 
             // Redirect based on user role
@@ -121,7 +121,9 @@ const AdminLogin = () => {
                                         autoComplete="email"
                                         required
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         className="block w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-red-500 focus:border-red-500"
                                         placeholder="admin@aorbo.com"
                                     />
@@ -142,7 +144,9 @@ const AdminLogin = () => {
                                         autoComplete="current-password"
                                         required
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(e) =>
+                                            setPassword(e.target.value)
+                                        }
                                         className="block w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-red-500 focus:border-red-500"
                                         placeholder="••••••••"
                                     />
@@ -226,4 +230,4 @@ const AdminLogin = () => {
     );
 };
 
-export default AdminLogin; 
+export default AdminLogin;

@@ -86,9 +86,15 @@ const Treks = () => {
     // Filter treks based on search term and status
     const filteredTreks = treks.filter((trek) => {
         const matchesSearch =
-            trek.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            trek.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            trek.description.toLowerCase().includes(searchTerm.toLowerCase());
+            (trek.name?.toLowerCase() || "").includes(
+                searchTerm.toLowerCase()
+            ) ||
+            (trek.destination?.toLowerCase() || "").includes(
+                searchTerm.toLowerCase()
+            ) ||
+            (trek.description?.toLowerCase() || "").includes(
+                searchTerm.toLowerCase()
+            );
         const matchesStatus =
             statusFilter === "all" || trek.status === statusFilter;
         return matchesSearch && matchesStatus;

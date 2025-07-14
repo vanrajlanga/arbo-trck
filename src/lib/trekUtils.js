@@ -103,11 +103,11 @@ export const formatTrekDataForAPI = ({
         : [];
 
     // Prepare activities from the activities state
-    // Activities are simple objects with 'name' property from DynamicActivities component
+    // Activities are now objects with 'id' property from activity selection
     console.log("formatTrekDataForAPI - raw activities:", activities);
     const activitiesArray = activities
-        .map((activity) => activity.name)
-        .filter((name) => name && name.trim() !== "");
+        .map((activity) => activity.id)
+        .filter((id) => id && Number.isInteger(id));
     console.log(
         "formatTrekDataForAPI - processed activities:",
         activitiesArray
@@ -261,13 +261,35 @@ export const processCancellationPolicy = (cancellationPolicies) => {
 
 /**
  * Process activities from API data
- * @param {Array} activities - Activities from API
+ * @param {Array} activities - Activities from API (can be IDs or activityDetails)
  * @returns {Array} Processed activities for form
  */
-export const processActivities = (activities) => {
+export const processActivities = (activities, activityDetails = []) => {
     if (!Array.isArray(activities)) return [];
 
-    // Handle different possible formats
+    // If activities is an array of IDs and we have activityDetails
+    if (
+        activities.length > 0 &&
+        typeof activities[0] === "number" &&
+        activityDetails.length > 0
+    ) {
+        return activities.map((activityId) => {
+            const activityDetail = activityDetails.find(
+                (ad) => ad.id === activityId
+            );
+            return {
+                id: activityId,
+                name: activityDetail
+                    ? activityDetail.name
+                    : `Activity ${activityId}`,
+                category_name: activityDetail
+                    ? activityDetail.category_name
+                    : "",
+            };
+        });
+    }
+
+    // Handle different possible formats (fallback for backward compatibility)
     return activities
         .map((activity, index) => {
             if (typeof activity === "string") {
@@ -277,8 +299,9 @@ export const processActivities = (activities) => {
                 };
             } else if (activity && typeof activity === "object") {
                 return {
-                    id: `activity-${index}`,
+                    id: activity.id || `activity-${index}`,
                     name: activity.name || activity.activity || "",
+                    category_name: activity.category_name || "",
                 };
             }
             return {
