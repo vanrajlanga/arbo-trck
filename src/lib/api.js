@@ -28,8 +28,11 @@ export const apiCall = async (endpoint, options = {}) => {
     };
 
     try {
+        console.log("🌐 Making fetch request to:", url);
         const response = await fetch(url, config);
+        console.log("🌐 Response status:", response.status);
         const data = await response.json();
+        console.log("🌐 Response data:", data);
 
         if (!response.ok) {
             throw new Error(
@@ -39,7 +42,7 @@ export const apiCall = async (endpoint, options = {}) => {
 
         return data;
     } catch (error) {
-        console.error("API call failed:", error);
+        console.error("❌ API call failed:", error);
         throw error;
     }
 };
@@ -306,6 +309,11 @@ export const apiVendor = {
         apiCall(`/api/vendor/treks/${id}/status`, {
             method: "PATCH",
         }),
+    createBatches: (trekId, batchData) =>
+        apiCall(`/api/vendor/treks/${trekId}/batches`, {
+            method: "POST",
+            body: JSON.stringify(batchData),
+        }),
 
     // Booking endpoints
     getBookings: (params = {}) => {
@@ -424,6 +432,16 @@ export const apiVendor = {
             `/api/vendor/destinations${queryString ? `?${queryString}` : ""}`
         );
     },
+    searchDestinations: (searchTerm, limit = 10) => {
+        console.log("🌐 API searchDestinations called with:", {
+            searchTerm,
+            limit,
+        });
+        const params = new URLSearchParams({ q: searchTerm, limit });
+        const url = `/api/vendor/destinations/search?${params}`;
+        console.log("🌐 API URL:", url);
+        return apiCall(url);
+    },
     getDestinationById: (id) => apiCall(`/api/vendor/destinations/${id}`),
     createDestination: (destinationData) =>
         apiCall("/api/vendor/destinations", {
@@ -443,6 +461,26 @@ export const apiVendor = {
         apiCall(`/api/vendor/destinations/${id}/toggle-popularity`, {
             method: "PATCH",
         }),
+
+    // Activity endpoints
+    getActivities: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/vendor/activities${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getActivityCategories: () => apiCall("/api/vendor/activities/categories"),
+
+    // Cancellation Policy endpoints
+    getCancellationPolicies: () => apiCall("/api/vendor/cancellation-policies"),
+
+    // Badge endpoints
+    getBadges: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/admin/badges${queryString ? `?${queryString}` : ""}`
+        );
+    },
 
     // Coupon endpoints
     getCoupons: () => apiCall("/api/vendor/coupons"),
@@ -737,6 +775,18 @@ export const apiV1 = {
         return apiCall(`/api/v1/cities${queryString ? `?${queryString}` : ""}`);
     },
     getCityById: (id) => apiCall(`/api/v1/cities/${id}`),
+
+    // Destination endpoints (public - for mobile app)
+    getDestinations: (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return apiCall(
+            `/api/v1/destinations${queryString ? `?${queryString}` : ""}`
+        );
+    },
+    getDestinationById: (id) => apiCall(`/api/v1/destinations/${id}`),
+    getPopularDestinations: () => apiCall("/api/v1/destinations/popular"),
+    getDestinationsByState: (state) =>
+        apiCall(`/api/v1/destinations/state/${state}`),
 
     // Pickup Points
     createPickupPoint: (pickupPointData) =>

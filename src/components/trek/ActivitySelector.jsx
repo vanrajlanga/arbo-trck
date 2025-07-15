@@ -12,6 +12,7 @@ const ActivitySelector = ({ selectedActivities = [], onChange }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [loading, setLoading] = useState(false);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
 
     // Fetch all activities and categories
@@ -23,12 +24,11 @@ const ActivitySelector = ({ selectedActivities = [], onChange }) => {
     const fetchActivities = async () => {
         try {
             setLoading(true);
-            const params = new URLSearchParams();
-            if (searchTerm) params.append("search", searchTerm);
-            if (selectedCategory !== "all")
-                params.append("category", selectedCategory);
+            const params = {};
+            if (searchTerm) params.search = searchTerm;
+            if (selectedCategory !== "all") params.category = selectedCategory;
 
-            const response = await apiVendor.get(`/activities?${params}`);
+            const response = await apiVendor.getActivities(params);
             if (response.success) {
                 setAllActivities(response.data);
             }
@@ -41,12 +41,15 @@ const ActivitySelector = ({ selectedActivities = [], onChange }) => {
 
     const fetchCategories = async () => {
         try {
-            const response = await apiVendor.get("/activities/categories");
+            setCategoriesLoading(true);
+            const response = await apiVendor.getActivityCategories();
             if (response.success) {
                 setCategories(response.data);
             }
         } catch (error) {
             console.error("Error fetching categories:", error);
+        } finally {
+            setCategoriesLoading(false);
         }
     };
 
@@ -130,9 +133,14 @@ const ActivitySelector = ({ selectedActivities = [], onChange }) => {
                                 onChange={(e) =>
                                     setSelectedCategory(e.target.value)
                                 }
-                                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={categoriesLoading}
+                                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             >
-                                <option value="all">All Categories</option>
+                                <option value="all">
+                                    {categoriesLoading
+                                        ? "Loading..."
+                                        : "All Categories"}
+                                </option>
                                 {categories.map((category) => (
                                     <option key={category} value={category}>
                                         {category}

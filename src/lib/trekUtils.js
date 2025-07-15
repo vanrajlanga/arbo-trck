@@ -141,7 +141,7 @@ export const formatTrekDataForAPI = ({
         exclusions: exclusionsArray,
         meetingPoint:
             meetingPoint?.locationDetails || trekData.meetingPoint || "",
-        meetingTime: meetingPoint?.time || trekData.meetingTime || "",
+
         itinerary: itinerary,
         accommodations: accommodations,
         trekStages: trekStages,
@@ -180,7 +180,6 @@ export const formatTrekDataForForm = (apiData) => {
             apiData.discountType || apiData.discount_type || "percentage",
         hasDiscount: apiData.hasDiscount || apiData.has_discount || false,
         meetingPoint: apiData.meetingPoint || apiData.meeting_point || "",
-        meetingTime: apiData.meetingTime || apiData.meeting_time || "",
     };
 };
 

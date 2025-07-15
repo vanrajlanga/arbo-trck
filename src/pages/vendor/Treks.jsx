@@ -86,15 +86,21 @@ const Treks = () => {
     // Filter treks based on search term and status
     const filteredTreks = treks.filter((trek) => {
         const matchesSearch =
-            (trek.name?.toLowerCase() || "").includes(
+            (trek.title?.toLowerCase() || "").includes(
                 searchTerm.toLowerCase()
             ) ||
-            (trek.destination?.toLowerCase() || "").includes(
+            (trek.destinationData?.name?.toLowerCase() || "").includes(
                 searchTerm.toLowerCase()
             ) ||
             (trek.description?.toLowerCase() || "").includes(
                 searchTerm.toLowerCase()
-            );
+            ) ||
+            (
+                trek.cityDetails
+                    ?.map((city) => city.cityName)
+                    .join(" ")
+                    .toLowerCase() || ""
+            ).includes(searchTerm.toLowerCase());
         const matchesStatus =
             statusFilter === "all" || trek.status === statusFilter;
         return matchesSearch && matchesStatus;
@@ -317,7 +323,8 @@ const Treks = () => {
                     <div className="py-4">
                         <p>
                             Are you sure you want to delete "
-                            {selectedTrek?.name}"? This action cannot be undone.
+                            {selectedTrek?.title}"? This action cannot be
+                            undone.
                         </p>
                     </div>
                     <DialogFooter>
@@ -341,7 +348,7 @@ const Treks = () => {
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>{selectedTrek?.name}</DialogTitle>
+                        <DialogTitle>{selectedTrek?.title}</DialogTitle>
                     </DialogHeader>
                     {selectedTrek && (
                         <div className="space-y-6">
@@ -357,9 +364,10 @@ const Treks = () => {
                                                 (image, index) => (
                                                     <img
                                                         key={index}
-                                                        src={getTrekImage(
-                                                            image
-                                                        )}
+                                                        src={
+                                                            image.url ||
+                                                            getTrekImage(image)
+                                                        }
                                                         alt={`Trek ${
                                                             index + 1
                                                         }`}
@@ -382,7 +390,16 @@ const Treks = () => {
                                             <span className="font-medium">
                                                 Destination:
                                             </span>{" "}
-                                            {selectedTrek.destination}
+                                            {selectedTrek.destinationData
+                                                ?.name || "Not specified"}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">
+                                                Cities:
+                                            </span>{" "}
+                                            {selectedTrek.cityDetails
+                                                ?.map((city) => city.cityName)
+                                                .join(", ") || "Not specified"}
                                         </div>
                                         <div>
                                             <span className="font-medium">
@@ -413,7 +430,13 @@ const Treks = () => {
                                             <span className="font-medium">
                                                 Price:
                                             </span>{" "}
-                                            ₹{selectedTrek.price}
+                                            ₹{selectedTrek.base_price}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">
+                                                Trek Type:
+                                            </span>{" "}
+                                            {selectedTrek.trek_type}
                                         </div>
                                     </div>
                                 </div>
@@ -444,33 +467,26 @@ const Treks = () => {
                                                     {selectedTrek.batches.reduce(
                                                         (sum, batch) =>
                                                             sum +
-                                                            (batch.bookedSlots ||
+                                                            (batch.booked_slots ||
                                                                 0),
                                                         0
                                                     )}
                                                 </div>
                                                 <div>
                                                     <span className="font-medium">
-                                                        Available:
+                                                        Available Slots:
                                                     </span>{" "}
                                                     {selectedTrek.batches.reduce(
                                                         (sum, batch) =>
                                                             sum +
-                                                            (batch.capacity ||
+                                                            (batch.available_slots ||
                                                                 0),
                                                         0
-                                                    ) -
-                                                        selectedTrek.batches.reduce(
-                                                            (sum, batch) =>
-                                                                sum +
-                                                                (batch.bookedSlots ||
-                                                                    0),
-                                                            0
-                                                        )}
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <span className="font-medium">
-                                                        Batches:
+                                                        Number of Batches:
                                                     </span>{" "}
                                                     {
                                                         selectedTrek.batches
@@ -480,28 +496,152 @@ const Treks = () => {
                                             </>
                                         ) : (
                                             <div className="text-gray-500">
-                                                No batches configured
+                                                No batches available
                                             </div>
                                         )}
-                                        <div>
-                                            <span className="font-medium">
-                                                Status:
-                                            </span>
-                                            <Badge
-                                                variant={
-                                                    selectedTrek.status ===
-                                                    "active"
-                                                        ? "default"
-                                                        : "secondary"
-                                                }
-                                                className="ml-2"
-                                            >
-                                                {selectedTrek.status}
-                                            </Badge>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Activities */}
+                            {selectedTrek.activityDetails &&
+                                selectedTrek.activityDetails.length > 0 && (
+                                    <div>
+                                        <h3 className="font-semibold mb-2">
+                                            Activities
+                                        </h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            {selectedTrek.activityDetails.map(
+                                                (activity, index) => (
+                                                    <Badge
+                                                        key={index}
+                                                        variant="outline"
+                                                        className="text-sm"
+                                                    >
+                                                        {activity.name}
+                                                    </Badge>
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                            {/* Inclusions & Exclusions */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {selectedTrek.inclusions &&
+                                    selectedTrek.inclusions.length > 0 && (
+                                        <div>
+                                            <h3 className="font-semibold mb-2">
+                                                Inclusions
+                                            </h3>
+                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                {selectedTrek.inclusions.map(
+                                                    (item, index) => (
+                                                        <li key={index}>
+                                                            {item}
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        </div>
+                                    )}
+                                {selectedTrek.exclusions &&
+                                    selectedTrek.exclusions.length > 0 && (
+                                        <div>
+                                            <h3 className="font-semibold mb-2">
+                                                Exclusions
+                                            </h3>
+                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                {selectedTrek.exclusions.map(
+                                                    (item, index) => (
+                                                        <li key={index}>
+                                                            {item}
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        </div>
+                                    )}
+                            </div>
+
+                            {/* Meeting Information */}
+                            {selectedTrek.meeting_point && (
+                                <div>
+                                    <h3 className="font-semibold mb-2">
+                                        Meeting Information
+                                    </h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div>
+                                            <span className="font-medium">
+                                                Meeting Point:
+                                            </span>{" "}
+                                            {selectedTrek.meeting_point}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Additional Information */}
+                            {(selectedTrek.short_description ||
+                                selectedTrek.trekking_rules ||
+                                selectedTrek.emergency_protocols ||
+                                selectedTrek.organizer_notes) && (
+                                <div>
+                                    <h3 className="font-semibold mb-2">
+                                        Additional Information
+                                    </h3>
+                                    <div className="space-y-3 text-sm">
+                                        {selectedTrek.short_description && (
+                                            <div>
+                                                <span className="font-medium">
+                                                    Short Description:
+                                                </span>
+                                                <p className="mt-1 text-gray-600">
+                                                    {
+                                                        selectedTrek.short_description
+                                                    }
+                                                </p>
+                                            </div>
+                                        )}
+                                        {selectedTrek.trekking_rules && (
+                                            <div>
+                                                <span className="font-medium">
+                                                    Trekking Rules:
+                                                </span>
+                                                <p className="mt-1 text-gray-600">
+                                                    {
+                                                        selectedTrek.trekking_rules
+                                                    }
+                                                </p>
+                                            </div>
+                                        )}
+                                        {selectedTrek.emergency_protocols && (
+                                            <div>
+                                                <span className="font-medium">
+                                                    Emergency Protocols:
+                                                </span>
+                                                <p className="mt-1 text-gray-600">
+                                                    {
+                                                        selectedTrek.emergency_protocols
+                                                    }
+                                                </p>
+                                            </div>
+                                        )}
+                                        {selectedTrek.organizer_notes && (
+                                            <div>
+                                                <span className="font-medium">
+                                                    Organizer Notes:
+                                                </span>
+                                                <p className="mt-1 text-gray-600">
+                                                    {
+                                                        selectedTrek.organizer_notes
+                                                    }
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Description */}
                             <div>
@@ -656,7 +796,7 @@ const TrekCard = ({
         0;
     const totalBooked =
         trek.batches?.reduce(
-            (sum, batch) => sum + (batch.bookedSlots || 0),
+            (sum, batch) => sum + (batch.booked_slots || 0),
             0
         ) || 0;
     const availableSlots = totalCapacity - totalBooked;
@@ -666,8 +806,11 @@ const TrekCard = ({
             <CardContent className="p-0">
                 <div className="relative">
                     <img
-                        src={getTrekImage(trek.images?.[0])}
-                        alt={trek.name}
+                        src={
+                            trek.images?.[0]?.url ||
+                            getTrekImage(trek.images?.[0])
+                        }
+                        alt={trek.title}
                         className="w-full h-48 object-cover rounded-t-md"
                     />
                     <Badge
@@ -680,7 +823,7 @@ const TrekCard = ({
                     </Badge>
                 </div>
                 <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{trek.name}</h3>
+                    <h3 className="font-semibold text-lg mb-2">{trek.title}</h3>
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                         {trek.description}
                     </p>
@@ -688,14 +831,23 @@ const TrekCard = ({
                     <div className="space-y-2 mb-4">
                         <div className="flex items-center text-sm text-gray-600">
                             <MapPin className="h-4 w-4 mr-1" />
-                            {trek.destination}
+                            {trek.destinationData?.name || "Not specified"}
                         </div>
+                        {trek.cityDetails && trek.cityDetails.length > 0 && (
+                            <div className="flex items-center text-sm text-gray-600">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {trek.cityDetails
+                                    .map((city) => city.cityName)
+                                    .join(", ")}
+                            </div>
+                        )}
                         <div className="flex items-center text-sm text-gray-600">
                             <Calendar className="h-4 w-4 mr-1" />
                             {trek.duration}
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-1" />₹{trek.price}
+                            <DollarSign className="h-4 w-4 mr-1" />₹
+                            {trek.base_price}
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                             <Users className="h-4 w-4 mr-1" />
@@ -787,7 +939,7 @@ const TrekTable = ({
                             const totalBooked =
                                 trek.batches?.reduce(
                                     (sum, batch) =>
-                                        sum + (batch.bookedSlots || 0),
+                                        sum + (batch.booked_slots || 0),
                                     0
                                 ) || 0;
                             const availableSlots = totalCapacity - totalBooked;
@@ -795,11 +947,14 @@ const TrekTable = ({
                             return (
                                 <TableRow key={trek.id}>
                                     <TableCell className="font-medium">
-                                        {trek.name}
+                                        {trek.title}
                                     </TableCell>
-                                    <TableCell>{trek.destination}</TableCell>
+                                    <TableCell>
+                                        {trek.destinationData?.name ||
+                                            "Not specified"}
+                                    </TableCell>
                                     <TableCell>{trek.duration}</TableCell>
-                                    <TableCell>₹{trek.price}</TableCell>
+                                    <TableCell>₹{trek.base_price}</TableCell>
                                     <TableCell>
                                         {availableSlots}/{totalCapacity}
                                     </TableCell>
